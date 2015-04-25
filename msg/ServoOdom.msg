@@ -1,3 +1,3 @@
 ros::Time time
-float64[16] joint_pos
-float64[16] joint_load
+float64[16] pos
+float64[16] torqload

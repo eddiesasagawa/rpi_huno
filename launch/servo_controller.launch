@@ -1,0 +1,7 @@
+<launch>
+ <!-- Set parameters -->
+ <param name="/joint_params/joint_slew_limit" value="10.0" type="double" />
+ 
+ <!-- Start Nodes -->
+ <node name="servo_control" pkg="rpi_huno" type="servo_control" args="" />
+</launch>
