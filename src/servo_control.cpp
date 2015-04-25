@@ -28,19 +28,49 @@ class servo_controller {
  //Serial port descriptor
  int servo_port;
 
+ //======FUNCTIONS=========
+ 
+ //Constructor
  servo_controller(ros::NodeHandle &n) : node(n),
-  joint_commands(node.subscribe("joint_commands", 1, &servo_controller::sendServoCommands, this)),
+  joint_commands(node.subscribe("joint_commands", 1, &servo_controller::servoInterface, this)),
   joint_angles(node.advertise<rpi_huno::ServoOdom>("/servo_odom",1)),
-  {
-   //Open serial port to servo motors (single port for all 16 motors)
-   //Because servo motors are daisy-chain UART
-   servo_port = serialOpen("/dev/ttyAMA0", 115200);
-   if(servo_port < 0)
-   { throw ros::Exception("Servo Port failed to be opened"); }
-  }
+ {
+  //Open serial port to servo motors (single port for all 16 motors)
+  //Because servo motors are daisy-chain UART
+  servo_port = serialOpen("/dev/ttyAMA0", 115200);
+  if(servo_port < 0)
+  { throw ros::Exception("Servo Port failed to be opened"); }
+ } //constructed servo_controller
+
+ //Destructor
+ ~servo_controller()
+ {
+  serialClose(servo_port);
+ } //destructed servo_controller
+
+ //Send commands to servos
+ int command_servo(int motor_ID, int des_pos, int des_torq)
+ {
+  //des_pos and des_torq must already be converted to
+  //servo required integers:
+  //position : 0~255
+  //torque : 0~5 (high to low)
+  int tmp_byte1, tmp_byte2;
+  
+ }
+
+ //Request servo status
+ void request_servo(int motor_ID, int *current_pos, int *current_load)
+ {
+  //returns current position and current load of servo
+  //position : 0~255
+  //load : 0~255
+  int tmp_byte1, tmp_byte2;
+  
+ }
 
  //--CALLBACK / Send Servo Commands--
- void sendServoCommands(const rpi_huno::ServoOdom& servo_cmds)
+ void servoInterface(const rpi_huno::ServoOdom& servo_cmds)
  {
   
  }

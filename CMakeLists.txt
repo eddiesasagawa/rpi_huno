@@ -6,6 +6,7 @@ project(rpi_huno)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -42,11 +43,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   ServoOdom.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -63,10 +63,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
+ generate_messages(
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
-# )
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -80,7 +80,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rpi_huno
-#  CATKIN_DEPENDS roscpp
+  CATKIN_DEPENDS roscpp message_runtime
 #  DEPENDS system_lib
 )
 
@@ -111,6 +111,10 @@ include_directories(
 # target_link_libraries(rpi_huno_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(servo_control src/servo_control.cpp)
+target_link_libraries(servo_control ${catkin_LIBRARIES} wiringPi)
+add_dependencies(servo_control rpi_huno_generate_messages_cpp)
 
 #############
 ## Install ##
