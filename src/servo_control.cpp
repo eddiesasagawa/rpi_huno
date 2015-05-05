@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "msg/ServoOdom.h"
+#include "rpi_huno/ServoOdom.h"
 
 #include <wiringSerial.h>
 
@@ -16,9 +16,6 @@ Specifically, this node will achieve the following:
  4. Send joint commands to individual servo motors
 
 ====TO-DOs
-- Write a run() function that reads and writes to joints at a set rate
-   independent of the callback, and callback only updates the commands.
-   Telemetry will be published here.
 - Convert ROS_INFO calls to a message log publisher
 - Display in log what the joint_target_pos array contains for
    potential debugging.
@@ -41,12 +38,13 @@ Time (read/write) :  1180 usec(?)
 */
 
 #define DEBUG_MODE 1
+#define LOOP_FREQ 10
 
 #define NUM_JOINTS 16
 #define SAM3_MAX_COUNT 254
 #define SAM3_DEG_TO_CTS (255/269) //Convert degrees to counts
 
-class servo_controller {
+class JointController {
  public:
  ros::NodeHandle &node;
  //Subscribe to desired joint angles
@@ -58,8 +56,7 @@ class servo_controller {
  int servo_port;
 
  //Servo Status Variables
- int joint_meas_pos[NUM_JOINTS];
- int joint_meas_load[NUM_JOINTS];
+ rpi_huno::ServoOdom joint_status;
  int joint_target_pos[NUM_JOINTS];
  int joint_target_torq[NUM_JOINTS];
 
@@ -68,8 +65,8 @@ class servo_controller {
 
  //======FUNCTIONS=========
  //Constructor
- servo_controller(ros::NodeHandle &n) : node(n),
-  joint_commands(node.subscribe("joint_commands", 1, &servo_controller::updateJointTargets, this)),
+ JointController(ros::NodeHandle &n) : node(n),
+  joint_commands(node.subscribe("joint_commands", 1, &JointController::updateJointTargets, this)),
   joint_angles(node.advertise<rpi_huno::ServoOdom>("/servo_odom",1))
  {
   //Open serial port to servo motors (single port for all 16 motors)
@@ -88,23 +85,44 @@ class servo_controller {
   { throw ros::Exception("No joint slew limit"); }
 
   //Initialize joint data
-  updateJointStatus();
+  int measured_position, measured_load;
+  int availData=0;
+  joint_status.time_now = ros::Time::now();
   for(int i=0; i<NUM_JOINTS; i++)
+  { request_status(i); } //request current joint angles
+  ros::Duration(0.0012).sleep(); //wait 1.2 millisec for responses from servos
+
+  availData = serialDataAvail(servo_port);
+  if(availData)
   {
-   joint_target_pos[i] = joint_meas_pos[i];
-   joint_target_torq[i] = 2;
+   ROS_INFO("Grabbing angles... %d left..", availData);
+   for(int i=0; i<NUM_JOINTS; i++)
+   {
+    measured_position = 0;
+    measured_load = 0;
+    availData = read_joint_buffer(measured_position, measured_load);
+    if(availData == 0)
+    { throw ros::Exception("Init joint buffer error"); }
+    ROS_INFO("%d left..", availData);
+
+    joint_status.pos[i] = measured_position;
+    joint_status.torqload[i] = measured_load;
+
+    joint_target_pos[i] = measured_position;
+    joint_target_torq[i] = 2;
+   }
   }
- } //constructed servo_controller
+ } //constructed JointController
 
  //Destructor
- ~servo_controller()
+ ~JointController()
  {
   serialClose(servo_port);
   ROS_INFO("Closed servo port");
- } //destructed servo_controller
+ } //destructed JointController
 
  //Send commands to joint servos
- int send_command(int motor_ID, int des_pos, int des_torq)
+ void send_command(int motor_ID, int des_pos, int des_torq)
  {
   //des_pos and des_torq must already be converted to
   //servo required integers:
@@ -119,30 +137,16 @@ class servo_controller {
   checksum = (tmp_byte1 ^ tmp_byte2) & 0x7f;
 
   //Send to serial port according to wCK protocol
-  serialPutchar(servo_port, 0xff) //Header
+  serialPutchar(servo_port, 0xff); //Header
   serialPutchar(servo_port, tmp_byte1); //Data1 (torque and motor id)
   serialPutchar(servo_port, tmp_byte2); //Target Position
   serialPutchar(servo_port, checksum); //Checksum
 
   //Servo will return a position and load from the motor
-  if(serialDataAvail(servo_port) == 2) //Check first, getchar has 10sec block!
-  {
-   ROS_INFO("Command sent, response found");
-
-   tmp_byte1 = serialGetchar(servo_port); //Load
-   tmp_byte2 = serialGetchar(servo_port); //Position
-  }
-
-  return 1; //For now
-/*  //Check position return to target position
-  if(tmp_byte2 < des_pos+jointSlewLimit || tmp_byte2 > des_pos-jointSlewLimit)
-  { return 1; }
-  else //Assume for now something failed.
-  { return 0; }*/
  }
 
  //Request joint servo status
- int request_status(int motor_ID, int &current_pos, int &current_load)
+ void request_status(int motor_ID)
  {
   //returns current position and current load of servo
   //load : 0~254
@@ -155,59 +159,25 @@ class servo_controller {
   tmp_byte1 = (5 << 5) | motor_ID;
   checksum = (tmp_byte1 ^ tmp_byte2) & 0x7f;
 
-  //Flush buffer to make sure we get the target data only
-  serialFlush(servo_port);
   //Send to serial port according to wCK protocol
   serialPutchar(servo_port, 0xff);
   serialPutchar(servo_port, tmp_byte1);
   serialPutchar(servo_port, tmp_byte2);
   serialPutchar(servo_port, checksum);
+ }
 
-  data_avail = serialDataAvail(servo_port);
-  if(data_avail == 2)
+ int read_joint_buffer(int &current_pos, int &current_load)
+ {
+  int tmp_dataAvail = serialDataAvail(servo_port);
+  if(tmp_dataAvail)
   {
    current_load = serialGetchar(servo_port);
    current_pos = serialGetchar(servo_port);
-   if( current_load<0 || current_pos<0 || current_load>SAM3_MAX_COUNT || current_pos>SAM3_MAX_COUNT )
-   {
-    ROS_INFO("Response obtained are out of range! Pos = %d, load = %d", current_pos, current_load);
-    return 1;
-   }
-   return 2;
-  }
-  else if(data_avail > 2)
-  {
-   ROS_INFO("Buffer contains %d, more than expected in status read", data_avail);
-   return 1;
+   tmp_dataAvail = serialDataAvail(servo_port);
+   return tmp_dataAvail;
   }
   else
-  {
-   ROS_INFO("Buffer contains %d, less than expected in status read", data_avail);
-   return 0;
-  }
- }
-
- //Update joint measured position and load
- void updateJointStatus(void)
- {
-  int measured_position;
-  int measured_load;
-  int request_rtn;
-
-  for(int motor=0; motor<NUM_JOINTS; motor++)
-  {
-   //clear each loop
-   measured_position = 0;
-   measured_load = 0;
-   request_rtn = 0;
-
-   request_rtn = request_status(motor, measured_position, measured_load);
-   if(request_rtn == 2)
-   {
-    joint_meas_pos[motor] = measured_position;
-    joint_meas_load[motor] = measured_load;
-   }
-  }
+  { return 0; }
  }
 
  //--CALLBACK--
@@ -233,3 +203,57 @@ class servo_controller {
    joint_target_torq[motor] = tmp_torq;
   }
  }
+
+ //--RUN FUNCTION--
+ void run(void)
+ {
+  int tmp_pos, tmp_load;
+  int availData=0;
+  joint_status.time_now = ros::Time::now();
+  //TODO: Re-order sequence as necessary
+  for(int motor=0; motor<NUM_JOINTS; motor++)
+  { send_command(motor, joint_target_pos[motor], joint_target_torq[motor]); }
+
+  ros::Duration(0.0012).sleep(); //wait for 1.2 millisec for responses from motors
+
+  availData = serialDataAvail(servo_port);
+  if(availData)
+  {
+   ROS_INFO("Run loop. Grabbing joint angles.. %d left..", availData);
+   for(int motor=0; motor<NUM_JOINTS; motor++)
+   {
+    tmp_pos = 0;
+    tmp_load = 0;
+    availData = read_joint_buffer(tmp_pos, tmp_load);
+    ROS_INFO("Run loop. %d left..", availData);
+
+    joint_status.pos[i] = tmp_pos;
+    joint_status.torqload[i] = tmp_load;
+   }
+  }
+
+  //Publish status
+  joint_angles.publish(joint_status);
+ }
+}; //end class
+
+//=========MAIN=====
+int main(int argc, char **argv)
+{
+ ros::init(argc, argv, "servo_control");
+ ros::NodeHandle n;
+ ros::Rate r(LOOP_FREQ);
+
+ JointController joint_control(n);
+
+ while(ros::ok())
+ {
+  ros::spinOnce();
+  joint_control.run();
+
+  r.sleep();
+ }
+
+ // Shouldn't ever get here.
+ return 1;
+}
