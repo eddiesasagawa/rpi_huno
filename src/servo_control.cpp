@@ -41,7 +41,7 @@ Time (read/write) :  1180 usec(?)
 
 #define NUM_JOINTS 16
 #define SAM3_MAX_COUNT 254
-#define SAM3_DEG_TO_CTS (255/269) //Convert degrees to counts
+#define SAM3_DEG_TO_CTS (255.0/269) //Convert degrees to counts
 
 class JointController {
  public:
@@ -105,7 +105,7 @@ class JointController {
     ROS_INFO("%d left..", availData);
 
     joint_status.pos[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
-    joint_status.torqload[i] = measured_load_cts;
+    joint_status.torqload[i] = double(measured_load_cts);
 
     joint_target_pos[i] = measured_pos_cts;
     joint_target_torq[i] = 2;
@@ -227,7 +227,7 @@ class JointController {
     ROS_INFO("Run loop. %d left..", availData);
 
     joint_status.pos[i] = tmp_pos_cts / SAM3_DEG_TO_CTS;
-    joint_status.torqload[i] = tmp_load_cts;
+    joint_status.torqload[i] = double(tmp_load_cts);
    }
   }
 
