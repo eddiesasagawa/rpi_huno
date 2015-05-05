@@ -38,7 +38,6 @@ Time (read/write) :  1180 usec(?)
 */
 
 #define DEBUG_MODE 1
-#define LOOP_FREQ 10
 
 #define NUM_JOINTS 16
 #define SAM3_MAX_COUNT 254
@@ -85,7 +84,7 @@ class JointController {
   { throw ros::Exception("No joint slew limit"); }
 
   //Initialize joint data
-  int measured_position, measured_load;
+  int measured_pos_cts, measured_load_cts;
   int availData=0;
   joint_status.time_now = ros::Time::now();
   for(int i=0; i<NUM_JOINTS; i++)
@@ -98,17 +97,17 @@ class JointController {
    ROS_INFO("Grabbing angles... %d left..", availData);
    for(int i=0; i<NUM_JOINTS; i++)
    {
-    measured_position = 0;
-    measured_load = 0;
-    availData = read_joint_buffer(measured_position, measured_load);
+    measured_pos_cts = 0;
+    measured_load_cts = 0;
+    availData = read_joint_buffer(measured_pos_cts, measured_load_cts);
     if(availData == 0)
     { throw ros::Exception("Init joint buffer error"); }
     ROS_INFO("%d left..", availData);
 
-    joint_status.pos[i] = measured_position;
-    joint_status.torqload[i] = measured_load;
+    joint_status.pos[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
+    joint_status.torqload[i] = measured_load_cts;
 
-    joint_target_pos[i] = measured_position;
+    joint_target_pos[i] = measured_pos_cts;
     joint_target_torq[i] = 2;
    }
   }
@@ -122,7 +121,7 @@ class JointController {
  } //destructed JointController
 
  //Send commands to joint servos
- void send_command(int motor_ID, int des_pos, int des_torq)
+ void send_command(int motor_ID, int des_pos_cts, int des_torq_cts)
  {
   //des_pos and des_torq must already be converted to
   //servo required integers:
@@ -132,8 +131,8 @@ class JointController {
   int tmp_byte2 = 0;
   int checksum = 0;
 
-  tmp_byte1 = (des_torq << 5) | motor_ID;
-  tmp_byte2 = des_pos;
+  tmp_byte1 = (des_torq_cts << 5) | motor_ID;
+  tmp_byte2 = des_pos_cts;
   checksum = (tmp_byte1 ^ tmp_byte2) & 0x7f;
 
   //Send to serial port according to wCK protocol
@@ -166,13 +165,13 @@ class JointController {
   serialPutchar(servo_port, checksum);
  }
 
- int read_joint_buffer(int &current_pos, int &current_load)
+ int read_joint_buffer(int &current_pos_cts, int &current_load_cts)
  {
   int tmp_dataAvail = serialDataAvail(servo_port);
   if(tmp_dataAvail)
   {
-   current_load = serialGetchar(servo_port);
-   current_pos = serialGetchar(servo_port);
+   current_load_cts = serialGetchar(servo_port);
+   current_pos_cts = serialGetchar(servo_port);
    tmp_dataAvail = serialDataAvail(servo_port);
    return tmp_dataAvail;
   }
@@ -183,31 +182,31 @@ class JointController {
  //--CALLBACK--
  void updateJointTargets(const rpi_huno::ServoOdom& joint_cmds)
  {
-  int tmp_pos_cmd, tmp_torq;
+  int tmp_pos_cmd_cts, tmp_torq_cts;
   for(int motor = 0; motor < NUM_JOINTS; motor++)
   {
    //Ensure commands are valid first and convert
-   tmp_pos_cmd = int((joint_cmds.pos[motor])*SAM3_DEG_TO_CTS);
-   if(tmp_pos_cmd > SAM3_MAX_COUNT)
-   { tmp_pos_cmd = SAM3_MAX_COUNT; }
-   else if(tmp_pos_cmd < 0)
-   { tmp_pos_cmd = 0; }
+   tmp_pos_cmd_cts = int((joint_cmds.pos[motor])*SAM3_DEG_TO_CTS);
+   if(tmp_pos_cmd_cts > SAM3_MAX_COUNT)
+   { tmp_pos_cmd_cts = SAM3_MAX_COUNT; }
+   else if(tmp_pos_cmd_cts < 0)
+   { tmp_pos_cmd_cts = 0; }
 
-   tmp_torq = int(joint_cmds.torqload[motor]);
-   if(tmp_torq < 0)
-   { tmp_torq = 0; }
-   else if(tmp_torq > 4)
-   { tmp_torq = 4; }
+   tmp_torq_cts = int(joint_cmds.torqload[motor]);
+   if(tmp_torq_cts < 0)
+   { tmp_torq_cts = 0; }
+   else if(tmp_torq_cts > 4)
+   { tmp_torq_cts = 4; }
 
-   joint_target_pos[motor] = tmp_pos_cmd;
-   joint_target_torq[motor] = tmp_torq;
+   joint_target_pos_cts[motor] = tmp_pos_cmd_cts;
+   joint_target_torq[motor] = tmp_torq_cts;
   }
  }
 
  //--RUN FUNCTION--
  void run(void)
  {
-  int tmp_pos, tmp_load;
+  int tmp_pos_cts, tmp_load_cts;
   int availData=0;
   joint_status.time_now = ros::Time::now();
   //TODO: Re-order sequence as necessary
@@ -222,13 +221,13 @@ class JointController {
    ROS_INFO("Run loop. Grabbing joint angles.. %d left..", availData);
    for(int motor=0; motor<NUM_JOINTS; motor++)
    {
-    tmp_pos = 0;
-    tmp_load = 0;
-    availData = read_joint_buffer(tmp_pos, tmp_load);
+    tmp_pos_cts = 0;
+    tmp_load_cts = 0;
+    availData = read_joint_buffer(tmp_pos_cts, tmp_load_cts);
     ROS_INFO("Run loop. %d left..", availData);
 
-    joint_status.pos[i] = tmp_pos;
-    joint_status.torqload[i] = tmp_load;
+    joint_status.pos[i] = tmp_pos_cts / SAM3_DEG_TO_CTS;
+    joint_status.torqload[i] = tmp_load_cts;
    }
   }
 
@@ -242,7 +241,12 @@ int main(int argc, char **argv)
 {
  ros::init(argc, argv, "servo_control");
  ros::NodeHandle n;
- ros::Rate r(LOOP_FREQ);
+
+ //Get parameters from ROS Param Server
+ double loop_freq;
+ if(!node.getParam("/servoControl/loop_freq", loop_freq))
+ { throw ros::Exception("No servo_control loop frequency"); }
+ ros::Rate r(loop_freq);
 
  JointController joint_control(n);
 
