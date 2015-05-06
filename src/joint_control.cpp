@@ -66,7 +66,7 @@ class JointController {
  //Constructor
  JointController(ros::NodeHandle &n) : node(n),
   joint_commands(node.subscribe("joint_commands", 1, &JointController::updateJointTargets, this)),
-  joint_angles(node.advertise<rpi_huno::ServoOdom>("/servo_odom",1))
+  joint_angles(node.advertise<rpi_huno::ServoOdom>("/joint_odom",1))
  {
   //Open serial port to servo motors (single port for all 16 motors)
   //Because servo motors are daisy-chain UART
@@ -80,7 +80,7 @@ class JointController {
    ROS_INFO("Flushed servo port");
   }
   //Get parameters from ROS Param Server
-  if(!node.getParam("/joint_params/joint_slew_limit", jointSlewLimit))
+  if(!node.getParam("/jointControl/joint_slew_limit", jointSlewLimit))
   { throw ros::Exception("No joint slew limit"); }
 
   //Initialize joint data
@@ -239,13 +239,13 @@ class JointController {
 //=========MAIN=====
 int main(int argc, char **argv)
 {
- ros::init(argc, argv, "servo_control");
+ ros::init(argc, argv, "joint_control");
  ros::NodeHandle n;
 
  //Get parameters from ROS Param Server
  double loop_freq;
- if(!node.getParam("/servoControl/loop_freq", loop_freq))
- { throw ros::Exception("No servo_control loop frequency"); }
+ if(!node.getParam("/jointControl/loop_freq", loop_freq))
+ { throw ros::Exception("No joint_control loop frequency"); }
  ros::Rate r(loop_freq);
 
  JointController joint_control(n);

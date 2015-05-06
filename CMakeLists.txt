@@ -112,9 +112,9 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(servo_control src/servo_control.cpp)
-target_link_libraries(servo_control ${catkin_LIBRARIES} wiringPi)
-add_dependencies(servo_control rpi_huno_generate_messages_cpp)
+add_executable(joint_control src/joint_control.cpp)
+target_link_libraries(joint_control ${catkin_LIBRARIES} wiringPi)
+add_dependencies(joint_control rpi_huno_generate_messages_cpp)
 
 #############
 ## Install ##

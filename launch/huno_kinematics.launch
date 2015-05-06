@@ -1,0 +1,17 @@
+<launch>
+ <!-- Set Parameters -->
+ <param name="/kinematics/slew" value="3.0" type="double" />
+ <rosparam name="/jointControl/min_limits">
+  [40.0, 40.0, 40.0, 40.0, 40.0, 
+   40.0, 40.0, 40.0, 40.0, 40.0, 
+   40.0, 40.0, 40.0,
+   40.0, 40.0, 40.0]</rosparam>
+ <rosparam name="/jointControl/max_limis">
+  [210.0, 210.0, 210.0, 210.0, 210.0,
+   210.0, 210.0, 210.0, 210.0, 210.0,
+   210.0, 210.0, 210.0,
+   210.0, 210.0, 210.0]</rosparam>
+   
+ <!-- Start node -->
+ <node name="huno_kinematics" pkg="rpi_huno" type="huno_kinematics" args="" />
+</launch>
