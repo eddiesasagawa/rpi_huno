@@ -1,0 +1,7 @@
+<launch>
+
+ <!-- launch nodes -->
+ <include file="$(find rpi_huno)/launch/joint_controller.launch" />
+ <include file="$(find rpi_huno)/launch/huno_kinematics.launch" />
+
+</launch>

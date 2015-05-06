@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "rpi_huno/ServoOdom.h"
+#include "common_functions.h"
 
 #include <algorithm>
 
@@ -51,21 +52,39 @@ class HunoKinematics {
   double tmp_pos, tmp_load;
   for(int joint=0; joint<NUM_JOINTS; joint++)
   {
-   //Simply pass joint angle plus or minus slew rate for now
-   tmp_pos = current_joint_angles.pos[joint];
-   tmp_load = current_joint_angles.torqload[joint];
+   if( isLeftArm(joint) || isRightArm(joint) )
+   {//Simply pass joint angle plus or minus slew rate for now
+    tmp_pos = current_joint_angles.pos[joint];
+    tmp_load = current_joint_angles.torqload[joint];
 
-   if(tmp_pos > max_joint_pos_limit[joint])
-   { slew_direction[joint] = -1; }
-   else if(tmp_pos < min_joint_pos_limit[joint])
-   { slew_direction[joint] = 1; }
+    if(tmp_pos > max_joint_pos_limit[joint])
+    { slew_direction[joint] = -1; }
+    else if(tmp_pos < min_joint_pos_limit[joint])
+    { slew_direction[joint] = 1; }
 
-   joint_data.pos[joint] = tmp_pos + slew_direction[joint]*joint_slew;
-   joint_data.torqload[joint] = ((tmp_load / 64)+0.5);
+    joint_data.pos[joint] = tmp_pos + slew_direction[joint]*joint_slew;
+    joint_data.torqload[joint] = 1; //((tmp_load / 64)+0.5);
+   }
+   else //is a leg joint, so don't move those for now
+   {
+    joint_data.pos[joint] = current_joint_angles.pos[joint];
+    joint_data.torqload[joint] = 2;
+   }
   }
-
   //Publish data
   joint_commands.publish(joint_data);
- }
+ } //End callback
+}; //End HunoKinematics class
 
-};
+//=====MAIN======
+int main(int argc, char **argv)
+{
+ ros::init(argc, argv, "huno_kinematics");
+ ros::NodeHandle n;
+
+ HunoKinematics huno_kinematics(n);
+
+ ros::spin();
+
+ return 1;
+}
