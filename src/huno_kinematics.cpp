@@ -3,6 +3,7 @@
 #include "common_functions.h"
 
 #include <algorithm>
+#include <vector>
 
 /*
 ===== DESCRIPTION =======
@@ -24,8 +25,8 @@ class HunoKinematics {
 
  rpi_huno::ServoOdom joint_data;
  int slew_direction[NUM_JOINTS];
- double max_joint_pos_limits[NUM_JOINTS];
- double min_joint_pos_limits[NUM_JOINTS];
+ std::vector<double> max_joint_pos_limits;
+ std::vector<double> min_joint_pos_limits;
  double joint_slew;
 
  //======FUNCTIONS==============
@@ -39,11 +40,17 @@ class HunoKinematics {
   //Get slew limit
   if(!node.getParam("/kinematics/slew", joint_slew))
   { throw ros::Exception("No joint slew limit"); }
+
   //Get max and min positions limits
-  if(!node.getParam("/jointControl/max_limits", max_joint_pos_limits);
+  if(!node.getParam("/jointControl/max_limits", max_joint_pos_limits))
   { throw ros::Exception("No joint max limits"); }
-  if(!node.getParam("/jointcontrol/min_limits", min_joint_pos_limits);
+  else if(max_joint_pos_limits.size()!=NUM_JOINTS)
+  { throw ros::Exception("Joint max limits vector incorrect"); }
+
+  if(!node.getParam("/jointControl/min_limits", min_joint_pos_limits))
   { throw ros::Exception("No joint min limits"); }
+  else if(min_joint_pos_limits.size()!=NUM_JOINTS)
+  { throw ros::Exception("Joint min limits vector incorrect"); }
  } //constructed HunoKinematics
 
  //CALLBACK
@@ -57,9 +64,9 @@ class HunoKinematics {
     tmp_pos = current_joint_angles.pos[joint];
     tmp_load = current_joint_angles.torqload[joint];
 
-    if(tmp_pos > max_joint_pos_limit[joint])
+    if(tmp_pos > max_joint_pos_limits[joint])
     { slew_direction[joint] = -1; }
-    else if(tmp_pos < min_joint_pos_limit[joint])
+    else if(tmp_pos < min_joint_pos_limits[joint])
     { slew_direction[joint] = 1; }
 
     joint_data.pos[joint] = tmp_pos + slew_direction[joint]*joint_slew;
