@@ -1,0 +1,35 @@
+<robot name="rq_huno">
+ <link name="head"/>
+ <link name="R13_shoulder"/>
+ <link name="R14_upperarm" />
+ <link name="R15_forearm" />
+ <link name="RH"/>
+
+ <joint name="j13" type="continuous">
+  <parent link="head"/>
+  <child link="R13_shoulder"/>
+  <origin xyz="-0.0263 -0.0292 -0.0266" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+ </joint>
+
+ <joint name="j14" type="continuous">
+  <parent link="R13_shoulder"/>
+  <child link="R14_upperarm"/>
+  <origin xyz="0 -0.038 0" rpy="0 0 3.14"/>
+  <axis xyz="1 0 0"/>
+ </joint>
+
+ <joint name="j15" type="continuous">
+  <parent link="R14_upperarm"/>
+  <child link="R15_forearm"/>
+  <origin xyz="0 0 -0.0492" rpy="0 0 3.14"/>
+  <axis xyz="0 1 0"/>
+ </joint>
+
+ <joint name="rh" type="fixed">
+  <parent link="R15_forearm"/>
+  <child link="RH"/>
+  <origin xyz="0.0725 0 0" rpy="0 0 0"/>
+ </joint>
+</robot>
+
