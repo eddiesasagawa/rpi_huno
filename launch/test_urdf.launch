@@ -2,6 +2,6 @@
  <include file="$(find rpi_huno)/launch/huno_master.launch" /> 
 
  <param name="robot_description" textfile="$(find rpi_huno)/urdf/rq_huno.urdf"/>
- <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
  <node name="joint_odom_conversion" pkg="rpi_huno" type="joint_odom_conversion" />
+ <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
 </launch>

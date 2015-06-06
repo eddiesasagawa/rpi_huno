@@ -18,7 +18,7 @@ class JointOdomConversion {
  ros::Subscriber sub_servo_odom;
  ros::Publisher pub_joint_states;
 
- sensor::JointState joint_state_odom;
+ sensor_msgs::JointState joint_state_odom;
 
  //Constructor
  JointOdomConversion(ros::NodeHandle &n): node(n),
