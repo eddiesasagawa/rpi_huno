@@ -6,6 +6,7 @@ project(rpi_huno)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  sensor_msgs
   message_generation
 )
 
@@ -64,8 +65,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
-#   DEPENDENCIES
+   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
+   sensor_msgs
  )
 
 ###################################
@@ -80,7 +82,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rpi_huno
-  CATKIN_DEPENDS roscpp message_runtime
+  CATKIN_DEPENDS roscpp sensor_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -121,6 +123,10 @@ add_library(rpi_huno src/common_functions.cpp)
 add_executable(huno_kinematics src/huno_kinematics.cpp src/common_functions.cpp)
 target_link_libraries(huno_kinematics ${catkin_LIBRARIES})
 add_dependencies(huno_kinematics rpi_huno_generate_messages_cpp)
+
+add_executable(joint_odom_conversion src/test_jointoutput_conversion.cpp)
+target_link_libraries(joint_odom_conversion ${catkin_LIBRARIES})
+add_dependencies(joint_odom_conversion rpi_huno_generate_messages_cpp)
 
 #############
 ## Install ##
