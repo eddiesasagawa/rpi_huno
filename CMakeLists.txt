@@ -44,10 +44,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   ServoOdom.msg
- )
+# add_message_files(
+#   FILES
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -123,10 +122,6 @@ add_library(rpi_huno src/common_functions.cpp)
 add_executable(huno_kinematics src/huno_kinematics.cpp src/common_functions.cpp)
 target_link_libraries(huno_kinematics ${catkin_LIBRARIES})
 add_dependencies(huno_kinematics rpi_huno_generate_messages_cpp)
-
-add_executable(joint_odom_conversion src/test_jointoutput_conversion.cpp)
-target_link_libraries(joint_odom_conversion ${catkin_LIBRARIES})
-add_dependencies(joint_odom_conversion rpi_huno_generate_messages_cpp)
 
 #############
 ## Install ##

@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "rpi_huno/ServoOdom.h"
+#include "sensor_msgs/JointState.h"
 
 #include <wiringSerial.h>
 
@@ -14,6 +14,13 @@ Specifically, this node will achieve the following:
  3. Subscribe to joint position and load commands to obtain desired
      joint positions
  4. Send joint commands to individual servo motors
+
+====Changes
+ver0.0
+-Identified as such June 6 2015.
+ver0.1
+-Changed joint pos and load messages from custom message to sensor_msgs/JointState
+
 
 ====TO-DOs
 - Add timeout exceptions to waiting for joints to respond
@@ -61,7 +68,7 @@ class JointController {
  int servo_port;
 
  //Servo Status Variables
- rpi_huno::ServoOdom joint_status;
+ sensor_msgs::JointState joint_status;
  int joint_target_pos_cts[NUM_JOINTS];
  int joint_target_torq[NUM_JOINTS];
 
@@ -72,7 +79,7 @@ class JointController {
  //Constructor
  JointController(ros::NodeHandle &n) : node(n),
   joint_commands(node.subscribe("joint_commands", 1, &JointController::updateJointTargets, this)),
-  joint_angles(node.advertise<rpi_huno::ServoOdom>("/joint_odom",1))
+  joint_angles(node.advertise<sensor_msgs::JointState>("/joint_odom",1))
  {
   //Open serial port to servo motors (single port for all 16 motors)
   //Because servo motors are daisy-chain UART
@@ -92,7 +99,10 @@ class JointController {
   //Initialize joint data
   int measured_pos_cts, measured_load_cts;
   int availData=0;
-  joint_status.time_now = ros::Time::now();
+  joint_status.header.stamp = ros::Time::now();
+  joint_status.name.resize(NUM_JOINTS);
+  joint_status.position.resize(NUM_JOINTS);
+  joint_status.effort.resize(NUM_JOINTS);
   for(int i=0; i<NUM_JOINTS; i++)
   { request_status(i); } //request current joint angles
   //ros::Duration(0.0012).sleep(); //wait 1.2 millisec for responses from servos
@@ -120,8 +130,8 @@ class JointController {
 
     ROS_INFO("%d left..", availData);
 
-    joint_status.pos[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
-    joint_status.torqload[i] = double(measured_load_cts);
+    joint_status.position[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
+    joint_status.effort[i] = double(measured_load_cts);
 
     joint_target_pos_cts[i] = measured_pos_cts;
     joint_target_torq[i] = 2;
@@ -199,19 +209,19 @@ class JointController {
  }
 
  //--CALLBACK--
- void updateJointTargets(const rpi_huno::ServoOdom& joint_cmds)
+ void updateJointTargets(const sensor_msgs::JointState& joint_cmds)
  {
   int tmp_pos_cmd_cts, tmp_torq_cts;
   for(int motor = 0; motor < NUM_JOINTS; motor++)
   {
    //Ensure commands are valid first and convert
-   tmp_pos_cmd_cts = int((joint_cmds.pos[motor])*SAM3_DEG_TO_CTS);
+   tmp_pos_cmd_cts = int((joint_cmds.position[motor])*SAM3_DEG_TO_CTS);
    if(tmp_pos_cmd_cts > SAM3_MAX_COUNT)
    { tmp_pos_cmd_cts = SAM3_MAX_COUNT; }
    else if(tmp_pos_cmd_cts < 0)
    { tmp_pos_cmd_cts = 0; }
 
-   tmp_torq_cts = int(joint_cmds.torqload[motor]);
+   tmp_torq_cts = int(joint_cmds.effort[motor]);
    if(tmp_torq_cts < 0)
    { tmp_torq_cts = 0; }
    else if(tmp_torq_cts > 4)
@@ -227,7 +237,7 @@ class JointController {
  {
   int tmp_pos_cts, tmp_load_cts;
   int availData=0;
-  joint_status.time_now = ros::Time::now();
+  joint_status.header.stamp = ros::Time::now();
   for(int motor=0; motor<NUM_JOINTS; motor++)
   { send_command(motor, joint_target_pos_cts[motor], joint_target_torq[motor]); }
 
@@ -251,8 +261,8 @@ class JointController {
     availData = read_joint_buffer(tmp_pos_cts, tmp_load_cts);
     ROS_INFO("Run loop. %d left..", availData);
 
-    joint_status.pos[motor] = tmp_pos_cts / SAM3_DEG_TO_CTS;
-    joint_status.torqload[motor] = double(tmp_load_cts);
+    joint_status.position[motor] = tmp_pos_cts / SAM3_DEG_TO_CTS;
+    joint_status.effort[motor] = double(tmp_load_cts);
    }
   }
   else
