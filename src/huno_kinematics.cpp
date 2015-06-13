@@ -33,7 +33,7 @@ class HunoKinematics {
  //Constructor
  HunoKinematics(ros::NodeHandle &n) : node(n),
   meas_joint_angles(node.subscribe("joint_odom",1,&HunoKinematics::commandJoints, this)),
-  joint_commands(node.advertise<sensor_msgs/JointState>("/joint_commands",1))
+  joint_commands(node.advertise<sensor_msgs::JointState>("/joint_commands",1))
  {
   //Set slew directions
   std::fill(slew_direction, slew_direction+NUM_JOINTS, 1);
@@ -65,6 +65,8 @@ class HunoKinematics {
   joint_data.header.stamp = ros::Time::now();
   for(int joint=0; joint<NUM_JOINTS; joint++)
   {
+   joint_data.name[joint] = current_joint_angles.name[joint];
+
    if( isLeftArm(joint) || isRightArm(joint) )
    {//Simply pass joint angle plus or minus slew rate for now
     tmp_pos = current_joint_angles.position[joint];

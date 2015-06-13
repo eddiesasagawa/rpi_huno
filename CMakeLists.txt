@@ -63,11 +63,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
+# generate_messages(
+#   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
-   sensor_msgs
- )
+#   sensor_msgs
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -122,6 +122,10 @@ add_library(rpi_huno src/common_functions.cpp)
 add_executable(huno_kinematics src/huno_kinematics.cpp src/common_functions.cpp)
 target_link_libraries(huno_kinematics ${catkin_LIBRARIES})
 add_dependencies(huno_kinematics rpi_huno_generate_messages_cpp)
+
+add_executable(joint_odom_conversion src/joint_odom_for_urdf.cpp)
+target_link_libraries(joint_odom_conversion ${catkin_LIBRARIES})
+add_dependencies(joint_odom_conversion rpi_huno_generate_messages_cpp)
 
 #############
 ## Install ##

@@ -2,7 +2,7 @@
 #include "sensor_msgs/JointState.h"
 
 #include <wiringSerial.h>
-
+#include <sstream>
 /*
 ====DESCRIPTION
 This node serves as the interface between software and joint servo motors
@@ -120,6 +120,10 @@ class JointController {
    ROS_INFO("Grabbing angles... %d left..", availData);
    for(int i=0; i<NUM_JOINTS; i++)
    {
+    std::stringstream joint_name;
+    joint_name << "j" << i;
+    joint_status.name[i] = joint_name.str();
+
     measured_pos_cts = 0;
     measured_load_cts = 0;
     availData = read_joint_buffer(measured_pos_cts, measured_load_cts);
