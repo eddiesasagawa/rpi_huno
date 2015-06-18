@@ -4,4 +4,5 @@
  <include file="$(find rpi_huno)/launch/joint_controller.launch" />
  <include file="$(find rpi_huno)/launch/huno_kinematics.launch" />
 
+ <node name="huno_forwardkinematics" pkg="rpi_huno" type="huno_forwardkinematics" args="" />
 </launch>

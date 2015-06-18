@@ -7,6 +7,7 @@ project(rpi_huno)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
+  geometry_msgs
   message_generation
 )
 
@@ -44,9 +45,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-# )
+ add_message_files(
+   FILES
+   HunoLimbPoses.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -63,11 +65,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
+ generate_messages(
+   DEPENDENCIES
+   geometry_msgs
 #   std_msgs  # Or other packages containing msgs
 #   sensor_msgs
-# )
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -81,7 +84,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rpi_huno
-  CATKIN_DEPENDS roscpp sensor_msgs message_runtime
+  CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -126,6 +129,11 @@ add_dependencies(huno_kinematics rpi_huno_generate_messages_cpp)
 add_executable(joint_odom_conversion src/joint_odom_for_urdf.cpp)
 target_link_libraries(joint_odom_conversion ${catkin_LIBRARIES})
 add_dependencies(joint_odom_conversion rpi_huno_generate_messages_cpp)
+
+add_executable(huno_forwardkinematics src/huno_forwardkinematics.cpp)
+target_link_libraries(huno_forwardkinematics ${catkin_LIBRARIES})
+add_dependencies(huno_forwardkinematics rpi_huno_generate_messages_cpp)
+
 
 #############
 ## Install ##
