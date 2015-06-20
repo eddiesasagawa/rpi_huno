@@ -5,6 +5,7 @@ project(rpi_huno)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
   roscpp
   sensor_msgs
   geometry_msgs
@@ -14,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(Eigen REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -85,7 +87,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rpi_huno
   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs message_runtime
-#  DEPENDS system_lib
+  DEPENDS Eigen system_lib
 )
 
 ###########
@@ -98,6 +100,8 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+
+include_directories(${EIGEN_INCLUDE_DIRS})
 
 ## Declare a cpp library
 # add_library(rpi_huno

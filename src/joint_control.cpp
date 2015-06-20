@@ -88,9 +88,9 @@ class JointController {
   { throw ros::Exception("Servo Port failed to be opened"); }
   if(serialDataAvail(servo_port))
   { //Buffer already had something
-   ROS_INFO("Number of bytes found at start = %d", serialDataAvail(servo_port));
+//   ROS_INFO("Number of bytes found at start = %d", serialDataAvail(servo_port));
    serialFlush(servo_port);
-   ROS_INFO("Flushed servo port");
+//   ROS_INFO("Flushed servo port");
   }
   //Get parameters from ROS Param Server
   if(!node.getParam("/jointControl/joint_slew_limit", jointSlewLimit))
@@ -117,7 +117,7 @@ class JointController {
 
   if(availData == 2*NUM_JOINTS)
   {
-   ROS_INFO("Grabbing angles... %d left..", availData);
+//   ROS_INFO("Grabbing angles... %d left..", availData);
    for(int i=0; i<NUM_JOINTS; i++)
    {
     std::stringstream joint_name;
@@ -132,7 +132,7 @@ class JointController {
     if(measured_pos_cts == 0)
     { throw ros::Exception("Failed to update joint pos"); }
 
-    ROS_INFO("%d left..", availData);
+//    ROS_INFO("%d left..", availData);
 
     joint_status.position[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
     joint_status.effort[i] = double(measured_load_cts);
@@ -257,13 +257,13 @@ class JointController {
 
   if(availData == (2*NUM_JOINTS))
   {
-   ROS_INFO("Run loop. Grabbing joint angles.. %d left..", availData);
+//   ROS_INFO("Run loop. Grabbing joint angles.. %d left..", availData);
    for(int motor=0; motor<NUM_JOINTS; motor++)
    {
     tmp_pos_cts = 0;
     tmp_load_cts = 0;
     availData = read_joint_buffer(tmp_pos_cts, tmp_load_cts);
-    ROS_INFO("Run loop. %d left..", availData);
+//    ROS_INFO("Run loop. %d left..", availData);
 
     joint_status.position[motor] = tmp_pos_cts / SAM3_DEG_TO_CTS;
     joint_status.effort[motor] = double(tmp_load_cts);

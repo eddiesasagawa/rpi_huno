@@ -2,7 +2,7 @@
 #define HUNO_FK_CLASS
 
 #include "ros/ros.h"
-#include "sensor_msgs/JointState"
+#include "sensor_msgs/JointState.h"
 #include <Eigen/Dense>
 
 class HunoForwardKinematics {
@@ -64,7 +64,7 @@ class HunoForwardKinematics {
            -0.0263,  -0.0292, -0.0266,
            -0.0263,  -0.0672, -0.0266,
            -0.0263,  -0.0672, -0.07575;
-  q_all.transposeInPlace(); //Transpose so that points are columns now for copying to vectors.
+  //q_all.transposeInPlace(); //Transpose so that points are columns now for copying to vectors.
 
   ref_angles << 134.5,
                 134.5,
@@ -92,21 +92,28 @@ class HunoForwardKinematics {
  // \out   exp_xihat_theta : 4x4 matrix containing exponential matrix of twist
  Eigen::Matrix4f exp_xihat_theta(int joint_id, float theta) {
   Eigen::Vector3f omega = omega_all.col(joint_id);
-  Eigen::Vector3f q = q_all.row(joint_id);
+  Eigen::Vector3f q = (q_all.row(joint_id)).transpose();
   float theta_corrected = theta - ref_angles(joint_id);
 
+  ROS_INFO("Joint %d : theta = %f, theta_corr = %f", joint_id, theta, theta_corrected);
+
   Eigen::Matrix3f omegahat;
-  omegahat << 0, -omega(3), omega(2),
-              omega(3), 0, -omega(1),
-              -omega(2), omega(1), 0;
+  omegahat << 0, -omega(2), omega(1),
+              omega(2), 0, -omega(0),
+              -omega(1), omega(0), 0;
 
   Eigen::Matrix3f exp_omegahat_theta;
   exp_omegahat_theta = Eigen::Matrix3f::Identity() + omegahat*sin(theta_corrected) + omegahat*omegahat*(1-cos(theta_corrected));
 
   Eigen::Matrix4f out_exp_xihat_theta;
+  Eigen::Vector3f temp_pos_vector;
+  temp_pos_vector = (Eigen::Matrix3f::Identity()-exp_omegahat_theta)*(-1*q); // Check that omegahat does not need to be used
   out_exp_xihat_theta.block<3,3>(0,0) = exp_omegahat_theta;
-  out_exp_xihat_theta.block<3,1>(0,3) = (Eigen::Matrix3f::Identity()-exp_omegahat_theta)*(-1*q); // Check that omegahat does not need to be used
-  out_exp_xihat_theta.row(3) << 0, 0, 0, 1;
+  out_exp_xihat_theta.block<3,1>(0,3) = temp_pos_vector;
+  out_exp_xihat_theta(3,0) =  0;
+  out_exp_xihat_theta(3,1) =  0;
+  out_exp_xihat_theta(3,2) =  0;
+  out_exp_xihat_theta(3,3) =  1;
 
   return out_exp_xihat_theta;
  }
