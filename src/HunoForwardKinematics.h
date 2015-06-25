@@ -95,8 +95,6 @@ class HunoForwardKinematics {
   Eigen::Vector3f q = (q_all.row(joint_id)).transpose();
   float theta_corrected = theta - ref_angles(joint_id);
 
-  ROS_INFO("Joint %d : theta = %f, theta_corr = %f", joint_id, theta, theta_corrected);
-
   Eigen::Matrix3f omegahat;
   omegahat << 0, -omega(2), omega(1),
               omega(2), 0, -omega(0),
@@ -114,6 +112,17 @@ class HunoForwardKinematics {
   out_exp_xihat_theta(3,1) =  0;
   out_exp_xihat_theta(3,2) =  0;
   out_exp_xihat_theta(3,3) =  1;
+
+  if(joint_id > 12) {
+   ROS_INFO("Joint %d : theta = %f, theta_corr = %f", joint_id, theta, theta_corrected);
+   ROS_INFO("q = %f, %f, %f", q(0), q(1), q(2));
+   ROS_INFO("omega = %f, %f, %f", omega(0), omega(1), omega(2));
+   ROS_INFO("out_eXiHat = ");
+   ROS_INFO(" %f, %f, %f, %f, ", out_exp_xihat_theta(0,0), out_exp_xihat_theta(0,1), out_exp_xihat_theta(0,2), out_exp_xihat_theta(0,3));
+   ROS_INFO(" %f, %f, %f, %f, ", out_exp_xihat_theta(1,0), out_exp_xihat_theta(1,1), out_exp_xihat_theta(1,2), out_exp_xihat_theta(1,3));
+   ROS_INFO(" %f, %f, %f, %f, ", out_exp_xihat_theta(2,0), out_exp_xihat_theta(2,1), out_exp_xihat_theta(2,2), out_exp_xihat_theta(2,3));
+   ROS_INFO(" %f, %f, %f, %f; ", out_exp_xihat_theta(3,0), out_exp_xihat_theta(3,1), out_exp_xihat_theta(3,2), out_exp_xihat_theta(3,3));
+  }
 
   return out_exp_xihat_theta;
  }

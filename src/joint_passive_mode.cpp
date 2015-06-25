@@ -6,32 +6,16 @@
 /*
 ====DESCRIPTION
 This node serves as the interface between software and joint servo motors
-on the RQ Huno
+on the RQ Huno.
 
-Specifically, this node will achieve the following:
- 1. Query the servo motors for current position and current load
- 2. Publish the received position and load data
- 3. Subscribe to joint position and load commands to obtain desired
-     joint positions
- 4. Send joint commands to individual servo motors
+This is a node that simply commands the joints to remain in passive mode while
+putting out joint angle values for debugging.
 
 ====Changes
 ver0.0
 -Identified as such June 6 2015.
 ver0.1
 -Changed joint pos and load messages from custom message to sensor_msgs/JointState
-
-
-====TO-DOs
-- Add timeout exceptions to waiting for joints to respond
-- Convert ROS_INFO calls to a message log publisher
-- Display in log what the joint_target_pos array contains for
-   potential debugging.
-
-====ISSUES
--For all 16 joints to send back their commands, it takes on average 5.5 msecs.
-  -Occassionally there will be spikes in length of time required, observed up to 20 msec!
-  -For now, priority will be placed on waiting for all joints to report back.
 
 ====ADDITIONAL INFO
 ==SAM-3 Servo Motors
@@ -50,17 +34,13 @@ Time (read/write) :  1180 usec(?)
 
 */
 
-#define DEBUG_MODE 1
-
 #define NUM_JOINTS 16
 #define SAM3_MAX_COUNT 254
 #define SAM3_DEG_TO_CTS (255.0/269) //Convert degrees to counts
 
-class JointController {
+class JointPassiveMode {
  public:
  ros::NodeHandle &node;
- //Subscribe to desired joint angles
- ros::Subscriber joint_commands;
  //Publish current joint angles
  ros::Publisher joint_angles;
 
@@ -69,16 +49,13 @@ class JointController {
 
  //Servo Status Variables
  sensor_msgs::JointState joint_status;
- int joint_target_pos_cts[NUM_JOINTS];
- int joint_target_torq[NUM_JOINTS];
 
  //Other
  double jointSlewLimit;
 
  //======FUNCTIONS=========
  //Constructor
- JointController(ros::NodeHandle &n) : node(n),
-  joint_commands(node.subscribe("joint_commands", 1, &JointController::updateJointTargets, this)),
+ JointPassiveMode(ros::NodeHandle &n) : node(n),
   joint_angles(node.advertise<sensor_msgs::JointState>("/joint_odom",1))
  {
   //Open serial port to servo motors (single port for all 16 motors)
@@ -88,13 +65,8 @@ class JointController {
   { throw ros::Exception("Servo Port failed to be opened"); }
   if(serialDataAvail(servo_port))
   { //Buffer already had something
-//   ROS_INFO("Number of bytes found at start = %d", serialDataAvail(servo_port));
    serialFlush(servo_port);
-//   ROS_INFO("Flushed servo port");
   }
-  //Get parameters from ROS Param Server
-  if(!node.getParam("/jointControl/joint_slew_limit", jointSlewLimit))
-  { throw ros::Exception("No joint slew limit"); }
 
   //Initialize joint data
   int measured_pos_cts, measured_load_cts;
@@ -105,7 +77,6 @@ class JointController {
   joint_status.effort.resize(NUM_JOINTS);
   for(int i=0; i<NUM_JOINTS; i++)
   { request_status(i); } //request current joint angles
-  //ros::Duration(0.0012).sleep(); //wait 1.2 millisec for responses from servos
   ros::Time start_wait = ros::Time::now();
   ros::Duration waiting_time = ros::Time::now() - start_wait;
   while(availData < 2*NUM_JOINTS       //Need to wait until all joints report back
@@ -117,7 +88,6 @@ class JointController {
 
   if(availData == 2*NUM_JOINTS)
   {
-//   ROS_INFO("Grabbing angles... %d left..", availData);
    for(int i=0; i<NUM_JOINTS; i++)
    {
     std::stringstream joint_name;
@@ -132,13 +102,8 @@ class JointController {
     if(measured_pos_cts == 0)
     { throw ros::Exception("Failed to update joint pos"); }
 
-//    ROS_INFO("%d left..", availData);
-
     joint_status.position[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
     joint_status.effort[i] = double(measured_load_cts);
-
-    joint_target_pos_cts[i] = measured_pos_cts;
-    joint_target_torq[i] = 2;
    }
   }
   else
@@ -146,7 +111,7 @@ class JointController {
  } //constructed JointController
 
  //Destructor
- ~JointController()
+ ~JointPassiveMode()
  {
 
   serialClose(servo_port);
@@ -154,7 +119,7 @@ class JointController {
  } //destructed JointController
 
  //Send commands to joint servos
- void send_command(int motor_ID, int des_pos_cts, int des_torq_cts)
+ void send_passive_cmd(int motor_ID)
  {
   //des_pos and des_torq must already be converted to
   //servo required integers:
@@ -188,7 +153,8 @@ class JointController {
   int checksum = 0;
   int data_avail = 0;
 
-  tmp_byte1 = (5 << 5) | motor_ID;
+  tmp_byte1 = (6 << 5) | motor_ID;
+  tmp_byte2 = (1 << 4);
   checksum = (tmp_byte1 ^ tmp_byte2) & 0x7f;
 
   //Send to serial port according to wCK protocol
@@ -212,30 +178,6 @@ class JointController {
   { return -1; }
  }
 
- //--CALLBACK--
- void updateJointTargets(const sensor_msgs::JointState& joint_cmds)
- {
-  int tmp_pos_cmd_cts, tmp_torq_cts;
-  for(int motor = 0; motor < NUM_JOINTS; motor++)
-  {
-   //Ensure commands are valid first and convert
-   tmp_pos_cmd_cts = int((joint_cmds.position[motor])*SAM3_DEG_TO_CTS);
-   if(tmp_pos_cmd_cts > SAM3_MAX_COUNT)
-   { tmp_pos_cmd_cts = SAM3_MAX_COUNT; }
-   else if(tmp_pos_cmd_cts < 0)
-   { tmp_pos_cmd_cts = 0; }
-
-   tmp_torq_cts = int(joint_cmds.effort[motor]);
-   if(tmp_torq_cts < 0)
-   { tmp_torq_cts = 0; }
-   else if(tmp_torq_cts > 4)
-   { tmp_torq_cts = 4; }
-
-   joint_target_pos_cts[motor] = tmp_pos_cmd_cts;
-   joint_target_torq[motor] = tmp_torq_cts;
-  }
- }
-
  //--RUN FUNCTION--
  void run(void)
  {
@@ -243,9 +185,8 @@ class JointController {
   int availData=0;
   joint_status.header.stamp = ros::Time::now();
   for(int motor=0; motor<NUM_JOINTS; motor++)
-  { send_command(motor, joint_target_pos_cts[motor], joint_target_torq[motor]); }
+  { send_passive_cmd(motor); }
 
-  //ros::Duration(0.0012).sleep(); //wait for 1.2 millisec for responses from motors
   ros::Time start_wait = ros::Time::now();
   ros::Duration waiting_time = ros::Time::now() - start_wait;
   while(availData < (2*NUM_JOINTS)
@@ -257,13 +198,11 @@ class JointController {
 
   if(availData == (2*NUM_JOINTS))
   {
-//   ROS_INFO("Run loop. Grabbing joint angles.. %d left..", availData);
    for(int motor=0; motor<NUM_JOINTS; motor++)
    {
     tmp_pos_cts = 0;
     tmp_load_cts = 0;
     availData = read_joint_buffer(tmp_pos_cts, tmp_load_cts);
-//    ROS_INFO("Run loop. %d left..", availData);
 
     joint_status.position[motor] = tmp_pos_cts / SAM3_DEG_TO_CTS;
     joint_status.effort[motor] = double(tmp_load_cts);
@@ -280,21 +219,21 @@ class JointController {
 //=========MAIN=====
 int main(int argc, char **argv)
 {
- ros::init(argc, argv, "joint_control");
+ ros::init(argc, argv, "joint_passive_mode");
  ros::NodeHandle n;
 
  //Get parameters from ROS Param Server
  double loop_freq;
- if(!n.getParam("/jointControl/loop_freq", loop_freq))
- { throw ros::Exception("No joint_control loop frequency"); }
+ if(!n.getParam("/jointPassive/loop_freq", loop_freq))
+ { throw ros::Exception("No joint_passive loop frequency"); }
  ros::Rate r(loop_freq);
 
- JointController joint_control(n);
+ JointPassiveMode joint_passive_mode(n);
 
  while(ros::ok())
  {
   ros::spinOnce();
-  joint_control.run();
+  joint_passive_mode.run();
 
   r.sleep();
  }

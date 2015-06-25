@@ -1,0 +1,7 @@
+<launch>
+ <!-- Set parameters -->
+ <param name="/jointPassive/loop_freq" value="10" type="double" />
+ 
+ <!-- Start Nodes -->
+ <node name="joint_passive_mode" pkg="rpi_huno" type="joint_passive_mode" args="" />
+</launch>

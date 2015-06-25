@@ -124,6 +124,10 @@ add_executable(joint_control src/joint_control.cpp)
 target_link_libraries(joint_control ${catkin_LIBRARIES} wiringPi)
 add_dependencies(joint_control rpi_huno_generate_messages_cpp)
 
+add_executable(joint_passive_mode src/joint_passive_mode.cpp)
+target_link_libraries(joint_passive_mode ${catkin_LIBRARIES} wiringPi)
+add_dependencies(joint_passive_mode rpi_huno_generate_messages_cpp)
+
 add_library(rpi_huno src/common_functions.cpp)
 
 add_executable(huno_kinematics src/huno_kinematics.cpp src/common_functions.cpp)
