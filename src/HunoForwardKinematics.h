@@ -70,16 +70,16 @@ class HunoForwardKinematics {
                 134.5,
                 224.5,
                 134.5,
-                134.5, //check theta_4
-                134.5, //check theta_5
+                134.5,
+                134.5,
                 134.5,
                  44.5,
                 134.5,
-                134.5, //check theta_9
-                 44.5, //check theta_10
+                134.5,
+                 70.6, //theta_10
                  44.5,
                  44.5,
-                224.5, //check theta_13
+                187.7, //theta_13
                 224.5,
                 224.5;
   ref_angles = ref_angles * (3.14/180); //Convert to radians

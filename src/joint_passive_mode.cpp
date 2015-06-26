@@ -129,14 +129,14 @@ class JointPassiveMode {
   int tmp_byte2 = 0;
   int checksum = 0;
 
-  tmp_byte1 = (des_torq_cts << 5) | motor_ID;
-  tmp_byte2 = des_pos_cts;
+  tmp_byte1 = (6 << 5) | motor_ID;
+  tmp_byte2 = (1 << 4);
   checksum = (tmp_byte1 ^ tmp_byte2) & 0x7f;
 
   //Send to serial port according to wCK protocol
   serialPutchar(servo_port, 0xff); //Header
-  serialPutchar(servo_port, tmp_byte1); //Data1 (torque and motor id)
-  serialPutchar(servo_port, tmp_byte2); //Target Position
+  serialPutchar(servo_port, tmp_byte1); //Data1 (motor id)
+  serialPutchar(servo_port, tmp_byte2); //Data2
   serialPutchar(servo_port, checksum); //Checksum
 
   //Servo will return a position and load from the motor
@@ -153,8 +153,7 @@ class JointPassiveMode {
   int checksum = 0;
   int data_avail = 0;
 
-  tmp_byte1 = (6 << 5) | motor_ID;
-  tmp_byte2 = (1 << 4);
+  tmp_byte1 = (5 << 5) | motor_ID;
   checksum = (tmp_byte1 ^ tmp_byte2) & 0x7f;
 
   //Send to serial port according to wCK protocol

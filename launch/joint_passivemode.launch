@@ -4,4 +4,5 @@
  
  <!-- Start Nodes -->
  <node name="joint_passive_mode" pkg="rpi_huno" type="joint_passive_mode" args="" />
+ <node name="huno_forwardkinematics" pkg="rpi_huno" type="huno_forwardkinematics" args="" />
 </launch>
