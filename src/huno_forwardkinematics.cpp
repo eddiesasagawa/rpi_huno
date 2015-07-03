@@ -1,10 +1,12 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Pose.h"
+#include "std_msgs/String.h"
 
 #include "HunoForwardKinematics.h"
 #include "rpi_huno/HunoLimbPoses.h"
 
+#include <sstream>
 #include <Eigen/Dense>
 
 /* ===DESCRIPTION===
@@ -31,6 +33,7 @@ class HunoFK {
  ros::NodeHandle &node;
  ros::Subscriber sJoint_angles;
  ros::Publisher pHuno_poses;
+ ros::Publisher pLog;
 
  HunoForwardKinematics huno_fwdkin;
  Eigen::Matrix4f head_T_LFoot;
@@ -43,6 +46,7 @@ class HunoFK {
   node(n),
   sJoint_angles(node.subscribe("joint_odom",1,&HunoFK::runFK,this)),
   pHuno_poses(node.advertise<rpi_huno::HunoLimbPoses>("/huno_poses",1)),
+  pLog(node.advertise<std_msgs::String>("/huno_fk_log",1)),
   huno_fwdkin(),
   head_T_LFoot(Eigen::Matrix4f::Identity()),
   head_T_RFoot(Eigen::Matrix4f::Identity()),
@@ -155,6 +159,19 @@ class HunoFK {
                                          (DEG2RAD*joint_states.position[14]),
                                          (DEG2RAD*joint_states.position[15]));
   publishFK();
+
+  std_msgs::String log_msg;
+  std::stringstream log_line;
+  log_line << ros::Time::now().toSec() << ',';
+  log_line << joint_states.position[13] << ',';
+  log_line << joint_states.position[14] << ',';
+  log_line << joint_states.position[15] << ',';
+  log_line << head_T_RHand(0,3) << ',';
+  log_line << head_T_RHand(1,3) << ',';
+  log_line << head_T_RHand(2,3) << ',';
+
+  log_msg.data = log_line.str();
+  pLog.publish(log_msg);
  }
 
 }; //End class
