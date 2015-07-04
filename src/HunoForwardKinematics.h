@@ -44,8 +44,8 @@ class HunoForwardKinematics {
               0, 0, 0, 1;
 
   //Set twist axes and points and reference angles
-  omega_all << -1,  0,  0,  0, -1, -1,  0,  0,  0, -1,  0, -1,  0,  0, -1,  0,
-                0, -1, -1, -1,  0,  0,  1,  1,  1,  0, -1,  0, -1,  1,  0,  1,
+  omega_all << -1,  0,  0,  0,  1, -1,  0,  0,  0, -1,  0,  1,  0,  0,  1,  0,
+                0,  1,  1, -1,  0,  0, -1, -1,  1,  0, -1,  0,  1,  1,  0, -1,
                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0;
 
   q_all << -0.06245,  0.0115, -0.0699,
@@ -66,22 +66,22 @@ class HunoForwardKinematics {
            -0.0263,  -0.0672, -0.07575;
   //q_all.transposeInPlace(); //Transpose so that points are columns now for copying to vectors.
 
-  ref_angles << 134.5,
-                134.5,
-                224.5,
-                134.5,
-                134.5,
-                134.5,
-                134.5,
-                 44.5,
-                134.5,
-                134.5,
-                 70.6, //theta_10
-                 44.5,
-                 44.5,
+  ref_angles << 127.6,
+                128.7,
+                225.7,
+                126.6,
+                126.6,
+                128.7,
+                128.7,
+                 38.0,
+                130.8,
+                127.6,
+                 70.7, //theta_10
+                 38.0,
+                 38.0,
                 187.7, //theta_13
-                224.5,
-                224.5;
+                218.3,
+                221.5;
   ref_angles = ref_angles * (3.14/180); //Convert to radians
 
  } //End constructor

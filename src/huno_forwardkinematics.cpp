@@ -41,6 +41,8 @@ class HunoFK {
  Eigen::Matrix4f head_T_LHand;
  Eigen::Matrix4f head_T_RHand;
 
+ ros::Time init_time;
+
  //Constructor
  HunoFK(ros::NodeHandle &n):
   node(n),
@@ -51,7 +53,8 @@ class HunoFK {
   head_T_LFoot(Eigen::Matrix4f::Identity()),
   head_T_RFoot(Eigen::Matrix4f::Identity()),
   head_T_LHand(Eigen::Matrix4f::Identity()),
-  head_T_RHand(Eigen::Matrix4f::Identity())
+  head_T_RHand(Eigen::Matrix4f::Identity()),
+  init_time(ros::Time::now())
  {
  }
 
@@ -162,7 +165,7 @@ class HunoFK {
 
   std_msgs::String log_msg;
   std::stringstream log_line;
-  log_line << ros::Time::now().toSec() << ',';
+  log_line << (ros::Time::now()-init_time).toSec() << ',';
   log_line << joint_states.position[13] << ',';
   log_line << joint_states.position[14] << ',';
   log_line << joint_states.position[15] << ',';
