@@ -105,7 +105,7 @@ class HunoForwardKinematics {
 
   Eigen::Matrix4f out_exp_xihat_theta;
   Eigen::Vector3f temp_pos_vector;
-  temp_pos_vector = (Eigen::Matrix3f::Identity()-exp_omegahat_theta)*(-1*q); // Check that omegahat does not need to be used
+  temp_pos_vector = (Eigen::Matrix3f::Identity()-exp_omegahat_theta)*(q); // omega x (-omega x q) = q
   out_exp_xihat_theta.block<3,3>(0,0) = exp_omegahat_theta;
   out_exp_xihat_theta.block<3,1>(0,3) = temp_pos_vector;
   out_exp_xihat_theta(3,0) =  0;
