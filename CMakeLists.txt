@@ -138,7 +138,7 @@ add_executable(joint_odom_conversion src/joint_odom_for_urdf.cpp)
 target_link_libraries(joint_odom_conversion ${catkin_LIBRARIES})
 add_dependencies(joint_odom_conversion rpi_huno_generate_messages_cpp)
 
-add_executable(huno_forwardkinematics src/huno_forwardkinematics.cpp)
+add_executable(huno_forwardkinematics src/huno_forwardkinematics.cpp src/HunoForwardKinematics.cpp)
 target_link_libraries(huno_forwardkinematics ${catkin_LIBRARIES})
 add_dependencies(huno_forwardkinematics rpi_huno_generate_messages_cpp)
 

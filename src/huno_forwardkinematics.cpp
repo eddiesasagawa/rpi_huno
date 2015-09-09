@@ -142,25 +142,14 @@ class HunoFK {
  }
 
  void runFK(const sensor_msgs::JointState& joint_states) {
-  head_T_LFoot = huno_fwdkin.LeftFootFK((DEG2RAD*joint_states.position[0]),
-                                        (DEG2RAD*joint_states.position[1]),
-                                        (DEG2RAD*joint_states.position[2]),
-                                        (DEG2RAD*joint_states.position[3]),
-                                        (DEG2RAD*joint_states.position[4]));
+  head_T_LFoot = huno_fwdkin.LimbFK(0,4, joint_states.position[0]);
 
-  head_T_RFoot = huno_fwdkin.RightFootFK((DEG2RAD*joint_states.position[5]),
-                                         (DEG2RAD*joint_states.position[6]),
-                                         (DEG2RAD*joint_states.position[7]),
-                                         (DEG2RAD*joint_states.position[8]),
-                                         (DEG2RAD*joint_states.position[9]));
+  head_T_RFoot = huno_fwdkin.RightFootFK(5,9, &joint_states.position[5]);
 
-  head_T_LHand = huno_fwdkin.LeftHandFK((DEG2RAD*joint_states.position[10]),
-                                        (DEG2RAD*joint_states.position[11]),
-                                        (DEG2RAD*joint_states.position[12]));
+  head_T_LHand = huno_fwdkin.LeftHandFK(10,12, &joint_states.position[10]);
 
-  head_T_RHand = huno_fwdkin.RightHandFK((DEG2RAD*joint_states.position[13]),
-                                         (DEG2RAD*joint_states.position[14]),
-                                         (DEG2RAD*joint_states.position[15]));
+  head_T_RHand = huno_fwdkin.RightHandFK(13,15, &joint_states.position[13]);
+
   publishFK();
 
   std_msgs::String log_msg;
