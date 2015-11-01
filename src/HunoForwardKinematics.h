@@ -1,6 +1,8 @@
 #ifndef HUNO_FK_H
 #define HUNO_FK_H
 
+#include "common_functions.h"
+
 #include <Eigen/Dense>
 
 /* Forward Kinematics class for the RQ Huno.
@@ -18,7 +20,7 @@ public:
  /// Limb forward kinematics functions
  /// @param low_id : lowest Joint ID number in limb
  /// @param high_id : highest joint ID number in limb
- /// @param thetas : array of angles for each joint in the limb (RADIANS)
+ /// @param thetas : pointer to array of angles for each joint in the limb (degrees)
  /// @out   out_fk_matrix : 4x4 homogeneous transformation matrix from head frame to
  ///                        end effector frame of limb in current configuration.
  Eigen::Matrix4f LimbFK(int low_id, int high_id, float *thetas);

@@ -89,7 +89,7 @@ Eigen::Matrix4f HunoForwardKinematics::exp_xihat_theta(int joint_id, float theta
   out_exp_xihat_theta(3,3) =  1;
 
   return out_exp_xihat_theta;
-}
+} //End exp_xihat_theta
 
 Eigen::Matrix4f HunoForwardKinematics::LimbFK(int low_id, int high_id, float *thetas)
 {
@@ -98,20 +98,43 @@ Eigen::Matrix4f HunoForwardKinematics::LimbFK(int low_id, int high_id, float *th
   throw ros::Exception("Invalid joint id range passed to LimbFK");
  }
 
+ int mult_ctr = 0;
+
  Eigen::Matrix4f out_limb_fk = Eigen::Matrix4f::Identity();
  for(int joint_i = low_id, joint_i <= high_id, joint_i++)
  {
-  out_limb_fk *= exp_xihat_theta(joint_i, thetas[(joint_i-low_id)]);
+  out_limb_fk *= exp_xihat_theta(joint_i, ( (*(thetas+(joint_i-low_id))) * DEG2RAD ) );
+  mult_ctr++;
  }
- 
+
  if(high_id < 5)
+ {
+  if(mult_ctr != 5)
+   throw ros::Exception("Multiplication LF failed");
+
   out_limb_fk *= g_l_foot_0;
+ }
  else if(high_id < 10)
+ {
+  if(mult_ctr != 5)
+   throw ros::Exception("Multiplication RF failed");
+
   out_limb_fk *= g_r_foot_0;
+ }
  else if(high_id < 13)
+ {
+  if(mult_ctr != 3)
+   throw ros::Exception("Multiplication LH failed");
+
   out_limb_fk *= g_l_hand_0;
+ }
  else
+ {
+  if(mult_ctr != 3)
+   throw ros::Exception("Multiplication RH failed");
+
   out_limb_fk *= g_r_hand_0;
+ }
 
  return out_limb_fk;
-}
+} // End LimbFK

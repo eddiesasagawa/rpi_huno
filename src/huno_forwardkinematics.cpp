@@ -6,6 +6,8 @@
 #include "HunoForwardKinematics.h"
 #include "rpi_huno/HunoLimbPoses.h"
 
+#include "common_functions.h"
+
 #include <sstream>
 #include <Eigen/Dense>
 
@@ -25,8 +27,6 @@ Publish:
 -Calculate velocities and forces
 
 */
-
-#define DEG2RAD (3.14/180)
 
 class HunoFK {
  public:
@@ -142,13 +142,13 @@ class HunoFK {
  }
 
  void runFK(const sensor_msgs::JointState& joint_states) {
-  head_T_LFoot = huno_fwdkin.LimbFK(0,4, joint_states.position[0]);
+  head_T_LFoot = huno_fwdkin.LimbFK(0,4, &joint_states.position[0]);
 
-  head_T_RFoot = huno_fwdkin.RightFootFK(5,9, &joint_states.position[5]);
+  head_T_RFoot = huno_fwdkin.LimbFK(5,9, &joint_states.position[5]);
 
-  head_T_LHand = huno_fwdkin.LeftHandFK(10,12, &joint_states.position[10]);
+  head_T_LHand = huno_fwdkin.LimbFK(10,12, &joint_states.position[10]);
 
-  head_T_RHand = huno_fwdkin.RightHandFK(13,15, &joint_states.position[13]);
+  head_T_RHand = huno_fwdkin.LimbFK(13,15, &joint_states.position[13]);
 
   publishFK();
 
