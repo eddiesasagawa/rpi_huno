@@ -107,28 +107,28 @@ Eigen::Matrix4f HunoForwardKinematics::LimbFK(int low_id, int high_id, float *th
   mult_ctr++;
  }
 
- if(high_id < 5)
+ if( isLeftLeg(high_id) )
  {
   if(mult_ctr != 5)
    throw ros::Exception("Multiplication LF failed");
 
   out_limb_fk *= g_l_foot_0;
  }
- else if(high_id < 10)
+ else if( isRightLeg(high_id) )
  {
   if(mult_ctr != 5)
    throw ros::Exception("Multiplication RF failed");
 
   out_limb_fk *= g_r_foot_0;
  }
- else if(high_id < 13)
+ else if( isLeftArm(high_id) )
  {
   if(mult_ctr != 3)
    throw ros::Exception("Multiplication LH failed");
 
   out_limb_fk *= g_l_hand_0;
  }
- else
+ else //is Right Arm
  {
   if(mult_ctr != 3)
    throw ros::Exception("Multiplication RH failed");
