@@ -36,10 +36,10 @@ class HunoFK {
  ros::Publisher pLog;
 
  HunoForwardKinematics huno_fwdkin;
- Eigen::Matrix4f head_T_LFoot;
- Eigen::Matrix4f head_T_RFoot;
- Eigen::Matrix4f head_T_LHand;
- Eigen::Matrix4f head_T_RHand;
+ Eigen::Matrix4d head_T_LFoot;
+ Eigen::Matrix4d head_T_RFoot;
+ Eigen::Matrix4d head_T_LHand;
+ Eigen::Matrix4d head_T_RHand;
 
  ros::Time init_time;
 
@@ -50,16 +50,16 @@ class HunoFK {
   pHuno_poses(node.advertise<rpi_huno::HunoLimbPoses>("/huno_poses",1)),
   pLog(node.advertise<std_msgs::String>("/huno_fk_log",1)),
   huno_fwdkin(),
-  head_T_LFoot(Eigen::Matrix4f::Identity()),
-  head_T_RFoot(Eigen::Matrix4f::Identity()),
-  head_T_LHand(Eigen::Matrix4f::Identity()),
-  head_T_RHand(Eigen::Matrix4f::Identity()),
+  head_T_LFoot(Eigen::Matrix4d::Identity()),
+  head_T_RFoot(Eigen::Matrix4d::Identity()),
+  head_T_LHand(Eigen::Matrix4d::Identity()),
+  head_T_RHand(Eigen::Matrix4d::Identity()),
   init_time(ros::Time::now())
  {
  }
 
  void publishFK() {
-  Eigen::Vector3f rot_axis = Eigen::Vector3f::Zero();
+  Eigen::Vector3d rot_axis = Eigen::Vector3d::Zero();
   float rot_angle;
   rpi_huno::HunoLimbPoses huno_poses;
 
@@ -71,7 +71,7 @@ class HunoFK {
   huno_poses.left_foot.position.z = head_T_LFoot(2,3);
   rot_angle = acos( ( ((head_T_LFoot.block<3,3>(0,0)).trace())-1 )/2 ); //Back out rotation unit vector and angle from rotation matrix
   if(sin(rot_angle) == 0) //Rotation matrix is identity and thus unit vector is arbitrary, or matrix was invalid such that it would cause divide by zero
-  { rot_axis = Eigen::Vector3f::Zero(); }
+  { rot_axis = Eigen::Vector3d::Zero(); }
   else
   {
    rot_axis(0) = ((head_T_LFoot(2,1)-head_T_LFoot(1,2))/(2*sin(rot_angle)));
@@ -89,7 +89,7 @@ class HunoFK {
   huno_poses.right_foot.position.z = head_T_RFoot(2,3);
   rot_angle = acos( ( ((head_T_RFoot.block<3,3>(0,0)).trace())-1 )/2 ); //Back out rotation unit vector and angle from rotation matrix
   if(sin(rot_angle) == 0) //Rotation matrix is identity and thus unit vector is arbitrary
-  { rot_axis = Eigen::Vector3f::Zero(); }
+  { rot_axis = Eigen::Vector3d::Zero(); }
   else
   {
    rot_axis(0) = ((head_T_RFoot(2,1)-head_T_RFoot(1,2))/(2*sin(rot_angle)));
@@ -107,7 +107,7 @@ class HunoFK {
   huno_poses.left_hand.position.z = head_T_LHand(2,3);
   rot_angle = acos( ( ((head_T_LHand.block<3,3>(0,0)).trace())-1 )/2 ); //Back out rotation unit vector and angle from rotation matrix
   if(sin(rot_angle) == 0) //Rotation matrix is identity and thus unit vector is arbitrary
-  { rot_axis = Eigen::Vector3f::Zero(); }
+  { rot_axis = Eigen::Vector3d::Zero(); }
   else
   {
    rot_axis(0) = ((head_T_LHand(2,1)-head_T_LHand(1,2))/(2*sin(rot_angle)));
@@ -125,7 +125,7 @@ class HunoFK {
   huno_poses.right_hand.position.z = head_T_RHand(2,3);
   rot_angle = acos( ( ((head_T_RHand.block<3,3>(0,0)).trace())-1 )/2 ); //Back out rotation unit vector and angle from rotation matrix
   if(sin(rot_angle) == 0) //Rotation matrix is identity and thus unit vector is arbitrary
-  { rot_axis = Eigen::Vector3f::Zero(); }
+  { rot_axis = Eigen::Vector3d::Zero(); }
   else
   {
    rot_axis(0) = ((head_T_RHand(2,1)-head_T_RHand(1,2))/(2*sin(rot_angle)));

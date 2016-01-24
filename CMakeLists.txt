@@ -131,15 +131,15 @@ add_dependencies(joint_passive_mode rpi_huno_generate_messages_cpp)
 add_library(rpi_huno src/common_functions.cpp)
 
 add_executable(huno_kinematics src/huno_kinematics.cpp src/common_functions.cpp)
-target_link_libraries(huno_kinematics ${catkin_LIBRARIES})
+target_link_libraries(huno_kinematics ${catkin_LIBRARIES} rpi_huno)
 add_dependencies(huno_kinematics rpi_huno_generate_messages_cpp)
 
 add_executable(joint_odom_conversion src/joint_odom_for_urdf.cpp)
 target_link_libraries(joint_odom_conversion ${catkin_LIBRARIES})
 add_dependencies(joint_odom_conversion rpi_huno_generate_messages_cpp)
 
-add_executable(huno_forwardkinematics src/huno_forwardkinematics.cpp src/HunoForwardKinematics.cpp)
-target_link_libraries(huno_forwardkinematics ${catkin_LIBRARIES})
+add_executable(huno_forwardkinematics src/huno_forwardkinematics.cpp src/HunoForwardKinematics.cpp src/common_functions.cpp)
+target_link_libraries(huno_forwardkinematics ${catkin_LIBRARIES} rpi_huno)
 add_dependencies(huno_forwardkinematics rpi_huno_generate_messages_cpp)
 
 

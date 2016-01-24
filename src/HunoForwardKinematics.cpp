@@ -63,24 +63,24 @@ HunoForwardKinematics::HunoForwardKinematics() :
   ref_angles = ref_angles * (3.14/180); //Convert to radians
 } //End Constructor
 
-Eigen::Matrix4f HunoForwardKinematics::exp_xihat_theta(int joint_id, float theta)
+Eigen::Matrix4d HunoForwardKinematics::exp_xihat_theta(int joint_id, double theta)
 {
- Eigen::Vector3f omega = omega_all.col(joint_id);
-  Eigen::Vector3f q = (q_all.row(joint_id)).transpose();
-  float theta_corrected = theta - ref_angles(joint_id);
+ Eigen::Vector3d omega = omega_all.col(joint_id);
+  Eigen::Vector3d q = (q_all.row(joint_id)).transpose();
+  double theta_corrected = theta - ref_angles(joint_id);
 
   /// exponential of skew symmetric matrix
-  Eigen::Matrix3f omegahat;
+  Eigen::Matrix3d omegahat;
   omegahat << 0, -omega(2), omega(1),
               omega(2), 0, -omega(0),
               -omega(1), omega(0), 0;
 
-  Eigen::Matrix3f exp_omegahat_theta;
-  exp_omegahat_theta = Eigen::Matrix3f::Identity() + omegahat*sin(theta_corrected) + omegahat*omegahat*(1-cos(theta_corrected));
+  Eigen::Matrix3d exp_omegahat_theta;
+  exp_omegahat_theta = Eigen::Matrix3d::Identity() + omegahat*sin(theta_corrected) + omegahat*omegahat*(1-cos(theta_corrected));
 
-  Eigen::Matrix4f out_exp_xihat_theta;
-  Eigen::Vector3f temp_pos_vector;
-  temp_pos_vector = (Eigen::Matrix3f::Identity()-exp_omegahat_theta)*(q); // omega x (-omega x q) = q
+  Eigen::Matrix4d out_exp_xihat_theta;
+  Eigen::Vector3d temp_pos_vector;
+  temp_pos_vector = (Eigen::Matrix3d::Identity()-exp_omegahat_theta)*(q); // omega x (-omega x q) = q
   out_exp_xihat_theta.block<3,3>(0,0) = exp_omegahat_theta;
   out_exp_xihat_theta.block<3,1>(0,3) = temp_pos_vector;
   out_exp_xihat_theta(3,0) =  0;
@@ -91,7 +91,7 @@ Eigen::Matrix4f HunoForwardKinematics::exp_xihat_theta(int joint_id, float theta
   return out_exp_xihat_theta;
 } //End exp_xihat_theta
 
-Eigen::Matrix4f HunoForwardKinematics::LimbFK(int low_id, int high_id, float *thetas)
+Eigen::Matrix4d HunoForwardKinematics::LimbFK(int low_id, int high_id, const double *thetas)
 {
  if(low_id < 0 || low_id > 13 || high_id < 4 || high_id > 15)
  {
@@ -100,8 +100,8 @@ Eigen::Matrix4f HunoForwardKinematics::LimbFK(int low_id, int high_id, float *th
 
  int mult_ctr = 0;
 
- Eigen::Matrix4f out_limb_fk = Eigen::Matrix4f::Identity();
- for(int joint_i = low_id, joint_i <= high_id, joint_i++)
+ Eigen::Matrix4d out_limb_fk = Eigen::Matrix4d::Identity();
+ for(int joint_i = low_id; joint_i <= high_id; joint_i++)
  {
   out_limb_fk *= exp_xihat_theta(joint_i, ( (*(thetas+(joint_i-low_id))) * DEG2RAD ) );
   mult_ctr++;

@@ -72,80 +72,6 @@ private:
  double jointSlewLimit;
 
  //======FUNCTIONS=========
- //Constructor
- // @param n : node handle
- JointController(ros::NodeHandle &n) : node(n),
-  joint_commands(node.subscribe("joint_commands", 1, &JointController::updateJointTargets, this)),
-  joint_angles(node.advertise<sensor_msgs::JointState>("/joint_odom",1))
- {
-  //Open serial port to servo motors (single port for all 16 motors)
-  //Because servo motors are daisy-chain UART
-  servo_port = serialOpen("/dev/ttyAMA0", 115200);
-  if(servo_port < 0)
-  { throw ros::Exception("Servo Port failed to be opened"); }
-  if(serialDataAvail(servo_port))
-  { //Buffer already had something
-   serialFlush(servo_port);
-  }
-  //Get parameters from ROS Param Server
-  if(!node.getParam("/jointControl/joint_slew_limit", jointSlewLimit))
-  { throw ros::Exception("No joint slew limit"); }
-
-  //Initialize joint data
-  int measured_pos_cts, measured_load_cts;
-  int availData=0;
-  joint_status.header.stamp = ros::Time::now();
-  joint_status.name.resize(NUM_JOINTS);
-  joint_status.position.resize(NUM_JOINTS);
-  joint_status.effort.resize(NUM_JOINTS);
-
-  for(int i=0; i<NUM_JOINTS; i++)
-  { request_status(i); } //request current joint angles
-
-  ros::Time start_wait = ros::Time::now();
-  ros::Duration waiting_time = ros::Time::now() - start_wait;
-  while(availData < 2*NUM_JOINTS       //Need to wait until all joints report back
-        && waiting_time.toSec() < 0.5) //Timeout
-  {
-   availData = serialDataAvail(servo_port);
-   waiting_time = ros::Time::now() - start_wait;
-  }
-
-  if(availData == 2*NUM_JOINTS)
-  {
-   for(int i=0; i<NUM_JOINTS; i++)
-   {
-    std::stringstream joint_name;
-    joint_name << "j" << i;
-    joint_status.name[i] = joint_name.str();
-
-    measured_pos_cts = 0;
-    measured_load_cts = 0;
-    availData = read_joint_buffer(measured_pos_cts, measured_load_cts);
-    if(availData < 0)
-    { throw ros::Exception("Init joint buffer error"); }
-    if(measured_pos_cts == 0)
-    { throw ros::Exception("Failed to update joint pos"); }
-
-    joint_status.position[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
-    joint_status.effort[i] = double(measured_load_cts);
-
-    joint_target_pos_cts[i] = measured_pos_cts;
-    joint_target_torq[i] = 2;
-   }
-  }
-  else
-  { throw ros::Exception("Ctor failed to initialize joint angles"); }
- } //constructed JointController
-
- //Destructor
- ~JointController()
- {
-
-  serialClose(servo_port);
-  ROS_INFO("Closed servo port");
- } //destructed JointController
-
  //Send commands to joint servos
  // @param motor_ID : ID number of servo motor to send command to
  // @param des_pos_cts : desired position in motor frame counts (0~254)
@@ -271,6 +197,80 @@ public:
   //Publish status
   joint_angles.publish(joint_status);
  }
+
+ //Constructor
+ // @param n : node handle
+ JointController(ros::NodeHandle &n) : node(n),
+  joint_commands(node.subscribe("joint_commands", 1, &JointController::updateJointTargets, this)),
+  joint_angles(node.advertise<sensor_msgs::JointState>("/joint_odom",1))
+ {
+  //Open serial port to servo motors (single port for all 16 motors)
+  //Because servo motors are daisy-chain UART
+  servo_port = serialOpen("/dev/ttyAMA0", 115200);
+  if(servo_port < 0)
+  { throw ros::Exception("Servo Port failed to be opened"); }
+  if(serialDataAvail(servo_port))
+  { //Buffer already had something
+   serialFlush(servo_port);
+  }
+  //Get parameters from ROS Param Server
+  if(!node.getParam("/jointControl/joint_slew_limit", jointSlewLimit))
+  { throw ros::Exception("No joint slew limit"); }
+
+  //Initialize joint data
+  int measured_pos_cts, measured_load_cts;
+  int availData=0;
+  joint_status.header.stamp = ros::Time::now();
+  joint_status.name.resize(NUM_JOINTS);
+  joint_status.position.resize(NUM_JOINTS);
+  joint_status.effort.resize(NUM_JOINTS);
+
+  for(int i=0; i<NUM_JOINTS; i++)
+  { request_status(i); } //request current joint angles
+
+  ros::Time start_wait = ros::Time::now();
+  ros::Duration waiting_time = ros::Time::now() - start_wait;
+  while(availData < 2*NUM_JOINTS       //Need to wait until all joints report back
+        && waiting_time.toSec() < 0.5) //Timeout
+  {
+   availData = serialDataAvail(servo_port);
+   waiting_time = ros::Time::now() - start_wait;
+  }
+
+  if(availData == 2*NUM_JOINTS)
+  {
+   for(int i=0; i<NUM_JOINTS; i++)
+   {
+    std::stringstream joint_name;
+    joint_name << "j" << i;
+    joint_status.name[i] = joint_name.str();
+
+    measured_pos_cts = 0;
+    measured_load_cts = 0;
+    availData = read_joint_buffer(measured_pos_cts, measured_load_cts);
+    if(availData < 0)
+    { throw ros::Exception("Init joint buffer error"); }
+    if(measured_pos_cts == 0)
+    { throw ros::Exception("Failed to update joint pos"); }
+
+    joint_status.position[i] = measured_pos_cts / SAM3_DEG_TO_CTS;
+    joint_status.effort[i] = double(measured_load_cts);
+
+    joint_target_pos_cts[i] = measured_pos_cts;
+    joint_target_torq[i] = 2;
+   }
+  }
+  else
+  { throw ros::Exception("Ctor failed to initialize joint angles"); }
+ } //constructed JointController
+
+ //Destructor
+ ~JointController()
+ {
+
+  serialClose(servo_port);
+  ROS_INFO("Closed servo port");
+ } //destructed JointController
 }; //end class
 
 //=========MAIN=====

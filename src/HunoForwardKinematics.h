@@ -1,6 +1,7 @@
 #ifndef HUNO_FK_H
 #define HUNO_FK_H
 
+#include "ros/ros.h"
 #include "common_functions.h"
 
 #include <Eigen/Dense>
@@ -23,26 +24,26 @@ public:
  /// @param thetas : pointer to array of angles for each joint in the limb (degrees)
  /// @out   out_fk_matrix : 4x4 homogeneous transformation matrix from head frame to
  ///                        end effector frame of limb in current configuration.
- Eigen::Matrix4f LimbFK(int low_id, int high_id, float *thetas);
+ Eigen::Matrix4d LimbFK(int low_id, int high_id, const double *thetas);
 
 private:
  /// Reference configuration matrices for each limb
- Eigen::Matrix4f g_l_foot_0;
- Eigen::Matrix4f g_r_foot_0;
- Eigen::Matrix4f g_l_hand_0;
- Eigen::Matrix4f g_r_hand_0;
+ Eigen::Matrix4d g_l_foot_0;
+ Eigen::Matrix4d g_r_foot_0;
+ Eigen::Matrix4d g_l_hand_0;
+ Eigen::Matrix4d g_r_hand_0;
 
  /// The following variables are hard-coded for now, since they are not anticipated to change.
  /// TODO: However in future, may revisit when incorporating calibration against errors.
 
  /// Joint twist axes
- Eigen::Matrix<float,3,16> omega_all;
+ Eigen::Matrix<double,3,16> omega_all;
 
  /// 3D points on each twist axis
- Eigen::Matrix<float,16,3> q_all;
+ Eigen::Matrix<double,16,3> q_all;
 
  /// Offset angles for each joint
- Eigen::Matrix<float,16,1> ref_angles;
+ Eigen::Matrix<double,16,1> ref_angles;
 
  /// Number of joints
  const int num_joints;
@@ -51,8 +52,8 @@ private:
  /// @param joint_id : Joint ID number
  /// @param theta : Radians of rotation about joint twist axis
  /// @out   out_exp_xihat_theta : 4x4 containing exponential matrix of twist
- Eigen::Matrix4f exp_xihat_theta(int joint_id, float theta);
+ Eigen::Matrix4d exp_xihat_theta(int joint_id, double theta);
 
-}
+};
 
 #endif
