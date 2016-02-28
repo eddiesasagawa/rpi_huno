@@ -1,35 +1,19 @@
-#include "common_functions.h"
+#include "huno_globals.h"
 
-//Left/Right Leg/Arm logic
-bool isRightArm(int joint_ID)
+hunolimb_t Identifylimb(int jointId)
 {
- if(joint_ID >= 13 && joint_ID <= 15)
- { return true; }
- else
- { return false; }
-}
+  hunolimb_t limbRes;
 
-bool isLeftArm(int joint_ID)
-{
- if(joint_ID >= 10 && joint_ID <= 12)
- { return true; }
- else
- { return false; }
-}
+  if      ( isLeftLeg(jointId) )
+  { limbRes = LeftLeg; }
+  else if ( isRightLeg(jointId) )
+  { limbRes = RightLeg; }
+  else if ( isLeftArm(jointId) )
+  { limbRes = LeftArm; }
+  else if ( isRightArm(jointId) )
+  { limbRes = RightArm; }
+  else // unknown id
+  { limbRes = UnknownLimb; }
 
-bool isRightLeg(int joint_ID)
-{
- if(joint_ID >= 5 && joint_ID <= 9)
- { return true; }
- else
- { return false; }
+  return limbRes;
 }
-
-bool isLeftLeg(int joint_ID)
-{
- if(joint_ID >= 0 && joint_ID <= 4)
- { return true; }
- else
- { return false; }
-}
-
