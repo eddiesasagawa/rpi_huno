@@ -2,6 +2,7 @@
 #define COMMON_FUNCTIONS_H
 
 #define DEG2RAD (3.14/180)
+#define RAD2DEG (180/3.14)
 
 #define HUNO_NUM_JOINTS 16
 

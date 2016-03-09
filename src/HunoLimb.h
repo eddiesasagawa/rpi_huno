@@ -51,6 +51,9 @@ private:
   /* Jacobian matrix for this limb */
   Eigen::MatrixXd m_jacobian_M;
 
+  /* Max angular velocity limits for each joint */
+  Eigen::VectorXd m_jointVelLimits_M;
+
   /* PRIVATE FUNCTIONS */
   /* Calculate screw matrix due to rotation */
   Eigen::Matrix4d ExpXihatTheta(int jointIdx, double &theta_M);
