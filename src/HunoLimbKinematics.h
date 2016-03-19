@@ -1,26 +1,28 @@
-#ifndef HUNOLIMB_H
-#define HUNOLIMB_H
+#ifndef HUNOLIMBKINEMATICS_H
+#define HUNOLIMBKINEMATICS_H
 
+#include "ros/ros.h"
 #include "geometry_msgs/Pose.h"
 #include "huno_globals.h"
 
+#include <string>
 #include <Eigen/Dense>
 
 /********************************************************************
-* Huno Limb Class.
+* Huno Limb Kinematics Class.
 * 
 * author: E. Sasagawa
 *
 * description:
 *   Declare limb class that will be used for all limbs.
-*   Mainly contains kinematic functions, but could be extended.
+*   Contains kinematic functions.
 *   
 * conventions:
 *   M : Mathematical Units (radians, meters/sec, etc.)
 *   C : Converted Units (degrees, mm/sec, etc.)
 ********************************************************************/
 
-class C_HunoLimb
+class C_HunoLimbKinematics
 {
 private:
   /* MEMBER VARIABLES */
@@ -66,13 +68,13 @@ private:
 
 public:
   /* Constructor */
-  C_HunoLimb(hunolimb_t limb, int numJoints, const double *p_thetasRef_M, const double *p_omegas_M, const double *p_qs_M, const double *p_g0Mat_M); 
+  C_HunoLimbKinematics(hunolimb_t limb, int numJoints, const std::string param_namespace);
 
   /* Forward kinematics and Jacobian generation*/
   geometry_msgs::Pose ForwardKinematics(const double *thetas_C);
 
   /* Inverse kinematics */
   bool InverseKinematics(const double *p_inEEVel_C, double *p_outThetasDot_C);
-}; // end class HunoLimb
+}; // end class HunoLimbKinematics
 
 #endif

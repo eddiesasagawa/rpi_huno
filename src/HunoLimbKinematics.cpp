@@ -1,17 +1,61 @@
-#include "HunoLimb.h"
+#include "HunoLimbKinematics.h"
 
-C_HunoLimb::C_HunoLimb(hunolimb_t limb, int numJoints, const double *p_thetasRef_M, const double *p_omegas_M, const double *p_qs_M, const double *p_g0Mat_M, const double *p_jointVelLimits_M) : 
+C_HunoLimbKinematics::C_HunoLimbKinematics(hunolimb_t limb, int numJoints, const std::string param_namespace) :
     m_limbType( limb ),
     m_numJoints( numJoints ),
-    m_thetasRef_M( Eigen::Map<Eigen::VectorXd>(p_thetasRef_M, numJoints) ),
-    m_omegas_M( Eigen::Map<Eigen::MatrixXd>(p_omegas_M, 3, numJoints) ),
-    m_qs_M( Eigen::Map<Eigen::MatrixXd>(p_qs_M, 3, numJoints) ),
+    m_thetasRef_M( Eigen::VectorXd::Zero(numJoints) ),
+    m_omegas_M( Eigen::MatrixXd::Zero(3, numJoints) ),
+    m_qs_M( Eigen::MatrixXd::Zero(3, numJoints) ),
     m_zetas_M( Eigen::MatrixXd::Zero(3, numJoints) ),
-    m_g0Mat_M( Eigen::Map<Eigen::Matrix4d>(p_g0Mat_M) ),
+    m_g0Mat_M( Eigen::Matrix4d::Zero() ),
     m_isJacobianLocked( true ),
     m_jacobian_M( Eigen::MatrixXd::Zero(numJoints, numJoints) ),
-    m_jointVelLimits_M( Eigen::Map<Eigen::VectorXd>(p_jointVelLimits_M, numJoints) )
+    m_jointVelLimits_M( Eigen::VectorXd::Zero(numJoints) )
 {
+  /* Load all parameters */
+  std::string paramName;
+  std::string errorStr;
+  std::vector<double> paramVector;
+
+  paramName = "/" + param_namespace + "/omegas";
+  errorStr = paramName + " not found";
+  if (ros::param::get(paramName.c_str(), paramVector))
+  { throw ros::Exception(errorStr.c_str()); }   
+  else
+  { m_omegas_M = Eigen::Map<Eigen::MatrixXd>(paramVector.c_str(), 3, numJoints); }
+
+  paramVector.clear();
+  paramName = "/" + param_namespace + "/qs";
+  errorStr = paramName + " not found";
+  if (ros::param::get(paramName.c_str(), paramVector))
+  { throw ros::Exception(errorStr.c_str()); }
+  else
+  { m_qs_M = Eigen::Map<Eigen::MatrixXd>(paramVector.c_str(), 3, numJoints); }
+
+  paramVector.clear();
+  paramName = "/" + param_namespace + "/thetaRefs";
+  errorStr = paramName + " not found";
+  if (ros::param::get(paramName.c_str(), paramVector))
+  { throw ros::Exception(errorStr.c_str()); }
+  else
+  { m_thetasRef_M = Eigen::Map<Eigen::VectorXd>(paramVector.c_str(), numJoints); }
+
+  paramVector.clear();
+  paramName = "/" + param_namespace + "/g_0";
+  errorStr = paramName + " not found";
+  if (ros::param::get(paramName.c_str(), paramVector))
+  { throw ros::Exception(errorStr.c_str()); }
+  else
+  { m_g0Mat_M = Eigen::Map<Eigen::Matrix4d>(paramVector.c_str()); }
+
+  paramVector.clear();
+  paramName = "/" + param_namespace + "/thetaDotMaxs_C";
+  errorStr = paramName + " not found";
+  if (ros::param::get(paramName.c_str(), paramVector))
+  { throw ros::Exception(errorStr.c_str()); }
+  else
+  { m_jointVelLimits_M = Eigen::Map<Eigen::Matrix4d>(paramVector.c_str()) * DEG2RAD; }
+
   /* Calculate twist coordiantes for each joint */
   // twist coord = [ (-omega X q), omega ]'
   // construct column by column
@@ -22,8 +66,8 @@ C_HunoLimb::C_HunoLimb(hunolimb_t limb, int numJoints, const double *p_thetasRef
   }
 } // end constructor  
 
-geometry_msgs::Pose C_HunoLimb::ForwardKinematics(const double *thetas_C)
-{ //TODO fix output to msg
+geometry_msgs::Pose C_HunoLimbKinematics::ForwardKinematics(const double *thetas_C)
+{ 
   geometry_msgs::Pose outLimbPose;
   Eigen::Vector3d rot_axis = Eigen::Vector3d::Zero();
   double rot_angle;
@@ -88,7 +132,7 @@ geometry_msgs::Pose C_HunoLimb::ForwardKinematics(const double *thetas_C)
   return outLimbPose; 
 } // end ForwardKinematics()
 
-bool C_HunoLimb::InverseKinematics(const double *p_inEEVel_C, double *p_outThetasDot_C)
+bool C_HunoLimbKinematics::InverseKinematics(const double *p_inEEVel_C, double *p_outThetasDot_C)
 {
   bool ikResult = true;
 
@@ -120,7 +164,7 @@ bool C_HunoLimb::InverseKinematics(const double *p_inEEVel_C, double *p_outTheta
   return ikResult;
 } // end InverseKinematics() 
 
-Eigen::Matrix4d C_HunoLimb::ExpXihatTheta(int jointIdx, double &theta_M)
+Eigen::Matrix4d C_HunoLimbKinematics::ExpXihatTheta(int jointIdx, double &theta_M)
 {
   Eigen::Vector3d omega = m_omegas_M.col(jointIdx);
   Eigen::Vector3d q = m_qs_M.col(jointIdx);
@@ -152,7 +196,7 @@ Eigen::Matrix4d C_HunoLimb::ExpXihatTheta(int jointIdx, double &theta_M)
   return outExpXihatTheta;
 } // end ExpXihatTheta()
 
-Eigen::Matrix6d C_HunoLimb::AdjointMatrix(const Eigen::Ref<const Eigen::Matrix4d> &expXihatTheta)
+Eigen::Matrix6d C_HunoLimbKinematics::AdjointMatrix(const Eigen::Ref<const Eigen::Matrix4d> &expXihatTheta)
 {
   Eigen::Matrix6d outAdMat = Eigen::Matrix6d::Zero();
 
@@ -167,12 +211,30 @@ Eigen::Matrix6d C_HunoLimb::AdjointMatrix(const Eigen::Ref<const Eigen::Matrix4d
   return outAdMat;
 } // end AdjointMatrix()
 
-void C_HunoLimb::BoundJointVels( Eigen::Ref<Eigen::VectorXd> &thetaDots_M )
+void C_HunoLimbKinematics::BoundJointVels( Eigen::Ref<Eigen::VectorXd> &thetaDots_M )
 {
+  /* scale factor for thetaDots_M */
+  double thetaDotSF = 1;
+  double tempSF = 1;
+
   /* check if any angular velocities exceed limits
      and scale if necessary */
-  
+  for (int jointIdx=0; jointIdx < m_numJoints; jointIdx++)
+  {
+    if (thetaDots_M[jointIdx] > m_jointVelLimits_M[jointIdx])
+    {
+      /* joint velocity command exceeds limit */
+      tempSF = m_jointVelLimits_M[jointIdx] / thetaDots_M[jointIdx];
 
+      /* save if scale factor is new minimum */
+      if (tempSF < thetaDotSF)
+      { thetaDotSF = tempSF; }
+    }
+  }
+
+  /* Scale thetaDots_M
+     if none of the joints exceed limits, it is just multiply by 1 */
+  thetaDots_M *= thetaDotSF;
 } // end BoundJointVels
 
 
