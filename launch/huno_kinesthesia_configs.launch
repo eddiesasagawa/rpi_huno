@@ -5,8 +5,19 @@
     <param name="/jointControl/joint_slew_limit" value="10.0" type="double" />
     <param name="/jointControl/loop_freq" value="20" type="double" />
 
+    <param name="/kinematics/slew" value="6.0" type="double" />
+    <rosparam param="/jointControl/min_limits">
+    [112.0, 104.0, 204.0, 117.0, 113.0, 
+     110.0, 117.0, 22.0, 104.0, 109.0, 
+     75.0, 90.0, 60.0,
+     120.0, 100.0, 110.0]</rosparam>
+   <rosparam param="/jointControl/max_limits">
+    [132.0, 124.0, 224.0, 137.0, 133.0,
+     130.0, 137.0, 42.0, 124.0, 129.0,
+     135.0, 180.0, 120.0,
+     180.0, 160.0, 170.0]</rosparam>
+    
   <!-- Huno Limb Parameters: Kinematics -->
-  <!-- <param name="/kinematics/slew" value="6.0" type="double" /> -->
 
   <!-- Left Leg -->
     <rosparam param="/leftFoot/min_thetas_C">
@@ -30,7 +41,7 @@
        -0.02515,  0.0115, -0.0699,
         0.02385,  0.0115, -0.0699,
        -0.01545,  0.0115, -0.09515,
-       -0.05375,  0.0115, -0.09515] </rosparam
+       -0.05375,  0.0115, -0.09515] </rosparam>
 
     <rosparam param="/leftFoot/thetaRefs">
       [127.6, 128.7, 225.7, 126.6, 126.6] </rosparam>
@@ -39,7 +50,7 @@
       [1, 0, 0, -0.05375,
        0, 1, 0,  0.0115,
        0, 0, 1, -0.10615,
-       0, 0, 0,        1] </rosparam
+       0, 0, 0,        1] </rosparam>
 
   <!-- Right Leg -->
     <rosparam param="/rightFoot/min_thetas_C">
@@ -121,7 +132,7 @@
     <rosparam param="/rightHand/qs">
       [-0.0263,  -0.0292, -0.0266,
        -0.0263,  -0.0672, -0.0266,
-       -0.0263,  -0.0672, -0.07575] </rosparam
+       -0.0263,  -0.0672, -0.07575] </rosparam>
 
     <rosparam param="/rightHand/thetaRefs">
       [187.7, 218.3, 221.5] </rosparam>

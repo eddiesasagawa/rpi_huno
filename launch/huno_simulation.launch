@@ -1,0 +1,11 @@
+<launch>
+  <!-- set all parameters -->
+  <include file="$(find rpi_huno)/launch/huno_kinesthesia_configs.launch" />
+
+ <!-- launch nodes -->
+ <include file="$(find rpi_huno)/launch/huno_kinematics.launch" />
+
+ <node name="joint_control_simulator" pkg="rpi_huno" type="joint_control_simulator" args="" />
+
+ <node name="huno_forwardkinematics" pkg="rpi_huno" type="huno_forwardkinematics" args="" />
+</launch>
